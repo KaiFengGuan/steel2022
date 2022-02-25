@@ -6,13 +6,16 @@
       </div>
     </template>
     <div class="what-if-view">
-      <what-if-main :whatIfData="whatIfData"></what-if-main>
+      <what-if-main
+        :plateStati="plateStati"
+        :gantData="gantData"
+      ></what-if-main>
     </div>
   </el-card>
 </template>
 
 <script>
-import { computed, defineComponent, reactive, watch, watchEffect } from "vue-demi";
+import { computed, defineComponent, reactive, watch } from "vue-demi";
 import { useStore } from "vuex";
 
 import WhatIfMain from './WhatIfMain.vue';
@@ -27,17 +30,23 @@ export default defineComponent({
     const store = useStore();
     const monthPickDate = computed(() => store.state.monthPickDate);
 
-    const whatIfData = reactive({
-      plateStati: null,
-    });
+    const plateStati = reactive({});
+    const gantData = reactive({});
 
     watch(monthPickDate, () => {
+      // 获取生产趋势统计数据
       getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
-        .then(res => whatIfData.plateStati = res.data);
+        .then(res => plateStati.value = res.data);
+
+      // 获取甘特图数据
+      setTimeout(() => {
+        gantData.value = {a: 1};
+      }, 5000);
     });
 
     return {
-      whatIfData,
+      plateStati,
+      gantData,
     }
   }
 });
