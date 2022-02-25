@@ -33,7 +33,10 @@ export default defineComponent({
     ControlPanel,
   },
   setup () {
-    
+
+    return {
+
+    }
   }
 });
 </script>

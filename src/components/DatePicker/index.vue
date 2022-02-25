@@ -6,7 +6,7 @@
     <el-col :span="12">
 			<el-date-picker
         class="my-date-picker"
-        v-model="selectDate"
+        v-model="monthPickDate"
         type="month"
         placeholder="Pick a month"
         format="YYYY-MM"
@@ -18,21 +18,32 @@
 </template>
 
 <script>
-import { defineComponent, ref, watchEffect } from "@vue/runtime-core";
+import { computed, defineComponent, onMounted, watch } from "@vue/runtime-core";
+import { useStore } from "vuex";
 
 import { convertTime } from '@/utils';
+import { SET_MONTH_PICKER } from '@/store/actionTypes';
 
 export default defineComponent({
   name: 'DatePicker',
-  setup () {
-    const selectDate = ref('');
+  setup (props) {
+    const store = useStore();
+    const monthPickDate = computed({
+      get: () => store.state.monthPickDate[0],
+      set: val => store.dispatch(SET_MONTH_PICKER, convertTime(val))  // 派发修改state
+    });
 
-    watchEffect(() => {
-      console.log('date: ', selectDate.value === '' ? '' : convertTime(selectDate.value));
-    })
+    // 开发时用, 初始默认选择的时间
+    onMounted(() => {
+      monthPickDate.value = '2021-01-01 00:00:00';
+    });
+
+    watch(monthPickDate, (newVal, oldVal) => {
+      console.log('选择的时间: ', newVal);
+    });
 
     return {
-      selectDate,
+      monthPickDate,
     }
   }
 });

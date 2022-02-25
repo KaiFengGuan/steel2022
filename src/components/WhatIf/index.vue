@@ -6,15 +6,17 @@
       </div>
     </template>
     <div class="what-if-view">
-      <what-if-main></what-if-main>
+      <what-if-main :whatIfData="whatIfData"></what-if-main>
     </div>
   </el-card>
 </template>
 
 <script>
-import { defineComponent } from "vue-demi";
+import { computed, defineComponent, reactive, watch, watchEffect } from "vue-demi";
+import { useStore } from "vuex";
 
 import WhatIfMain from './WhatIfMain.vue';
+import { getPlatesStatistics } from '@/api/overview';
 
 export default defineComponent({
   name: 'WhatIf',
@@ -22,7 +24,21 @@ export default defineComponent({
     WhatIfMain,
   },
   setup () {
-    
+    const store = useStore();
+    const monthPickDate = computed(() => store.state.monthPickDate);
+
+    const whatIfData = reactive({
+      plateStati: null,
+    });
+
+    watch(monthPickDate, () => {
+      getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
+        .then(res => whatIfData.plateStati = res.data);
+    });
+
+    return {
+      whatIfData,
+    }
   }
 });
 </script>
