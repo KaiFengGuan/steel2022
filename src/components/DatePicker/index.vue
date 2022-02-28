@@ -38,9 +38,9 @@ export default defineComponent({
       monthPickDate.value = '2021-01-01 00:00:00';
     });
 
-    watch(monthPickDate, (newVal, oldVal) => {
-      console.log('选择的时间: ', newVal);
-    });
+    // watch(monthPickDate, (newVal, oldVal) => {
+    //   console.log('选择的时间: ', newVal);
+    // });
 
     return {
       monthPickDate,

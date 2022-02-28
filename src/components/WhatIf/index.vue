@@ -5,47 +5,49 @@
         <span>What-If View</span>
       </div>
     </template>
-    <div class="what-if-view">
-      <what-if-main :whatIfData="whatIfData"></what-if-main>
-    </div>
+    <WhatIfMain
+      class="what-if-view"
+      :plateStati="plateStati"
+      :gantData="gantData"
+    />
   </el-card>
 </template>
 
-<script>
-import { computed, defineComponent, reactive, watch, watchEffect } from "vue-demi";
+<script setup>
+import { computed, reactive, watch } from "vue-demi";
 import { useStore } from "vuex";
 
+import { HEIGHT } from './size';
 import WhatIfMain from './WhatIfMain.vue';
 import { getPlatesStatistics } from '@/api/overview';
 
-export default defineComponent({
-  name: 'WhatIf',
-  components: {
-    WhatIfMain,
-  },
-  setup () {
-    const store = useStore();
-    const monthPickDate = computed(() => store.state.monthPickDate);
+import platesStatistics from '@/data/platesStatistics.json';
 
-    const whatIfData = reactive({
-      plateStati: null,
-    });
+const store = useStore();
+const monthPickDate = computed(() => store.state.monthPickDate);
 
-    watch(monthPickDate, () => {
-      getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
-        .then(res => whatIfData.plateStati = res.data);
-    });
+let plateStati = reactive({ value: {} });
+let gantData = reactive({ value: {}});
 
-    return {
-      whatIfData,
-    }
-  }
+watch(monthPickDate, () => {
+  // 获取生产趋势统计数据
+  getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
+    .then(res => plateStati.value = res.data);
+  // setTimeout(() => {
+  //   plateStati.value = platesStatistics;
+  // }, 10);
+
+  // 获取甘特图数据
+  setTimeout(() => {
+    gantData.value = {a: 1};
+  }, 5000);
 });
+
 </script>
 
 <style>
 @import url('@/assets/style/MyCard.scss');
 .what-if-view {
-  height: 1025px;
+  height: v-bind(HEIGHT);
 }
 </style>
