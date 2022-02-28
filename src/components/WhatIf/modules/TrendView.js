@@ -1,11 +1,12 @@
 import * as d3 from 'd3';
-import { SuperGroupView } from '@/utils/renderClass'
-import { TREND } from '../main';
+import { SuperGroupView } from '@/utils/renderClass';
+import { labelColor } from '@/utils/setting';
 
 export default class TrendView extends SuperGroupView {
   constructor(w, h, parentNode, rootName) {
     super(w, h, parentNode, rootName);
 
+    this._rootName = rootName;
     this._xScale = null;
     this._yScale = null;
   }
@@ -15,7 +16,6 @@ export default class TrendView extends SuperGroupView {
    */
   joinData(key, value) {
     this._rawData = value;
-    console.log('rawData: ', this._rawData)
 
     const len = this._rawData.endTimeOutput.length;
     const dataFlat = new Array();
@@ -28,11 +28,10 @@ export default class TrendView extends SuperGroupView {
       })
     }
     this._stackData = d3.stack()
-      .keys(['no_flag', 'good_flag', 'bad_flag'])
+      .keys(['bad_flag', 'good_flag', 'no_flag'])
       .order(d3.stackOrderNone)
       .offset(d3.stackOffsetNone)(dataFlat)
 
-    // console.log('stackData: ',this._stackData)
     return this;
   }
 
@@ -41,12 +40,14 @@ export default class TrendView extends SuperGroupView {
       this._rawData.good_flag,
       (d, i) => d + this._rawData.bad_flag[i] + this._rawData.no_flag[i]);
     
+    this._container.selectAll('g').remove();  // 先清空container
+    
     const options = {
       width: this._viewWidth,
       height: this._viewHeight,
       yDomain: [0, maxValue],
       xDomain: this._rawData.endTimeOutput,
-      colors: ['red', 'blue', 'green'],
+      colors: labelColor,
     }
     this.#renderStackBar(this._stackData, options);
     return this;
