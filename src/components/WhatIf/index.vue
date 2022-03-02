@@ -25,23 +25,26 @@ import platesStatistics from '@/data/platesStatistics.json';
 
 const store = useStore();
 const monthPickDate = computed(() => store.state.monthPickDate);
+const brushDate = computed(() => store.state.brushDate);
 
 let plateStati = reactive({ value: {} });
 let gantData = reactive({ value: {}});
 
 watch(monthPickDate, () => {
   // 获取生产趋势统计数据
-  getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
-    .then(res => plateStati.value = res.data);
-  // setTimeout(() => {
-  //   plateStati.value = platesStatistics;
-  // }, 10);
-
+  // getPlatesStatistics(5, monthPickDate.value[0], monthPickDate.value[1])
+  //   .then(res => plateStati.value = res.data);
+  setTimeout(() => {
+    plateStati.value = platesStatistics;
+  }, 10);
+});
+watch(brushDate, () => {
   // 获取甘特图数据
   setTimeout(() => {
+    console.log('已拿到甘特图数据')
     gantData.value = {a: 1};
   }, 5000);
-});
+})
 
 </script>
 

@@ -23,7 +23,7 @@ ALGORITHM_SELECT[ALGORITHM_OPTION.PCA_Cate] = 'CateVisualizationPCA';
 
 export function getPlatesStatistics (interval, dateStart, dateEnd) {
   return request({
-    url: `/v1.0/model/plateYieldStaistics/${interval}/${dateStart}/${dateEnd}/`,
+    url: `/v2.0/PlateYieldStaisticsApi/${interval}/${dateStart}/${dateEnd}/`,
     method: 'get'
   })
 }

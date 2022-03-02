@@ -23,9 +23,6 @@ onMounted(() => {
 // 绘制生产趋势统计数据
 const plateStati = props.plateStati;
 watch(plateStati, () => {
-  console.log('绘制生产趋势统计数据');
-  console.log('数据: ', plateStati.value)
-  
   renderInstance.render(TREND, toRaw(plateStati.value));
 });
 
