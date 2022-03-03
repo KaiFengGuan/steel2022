@@ -4,19 +4,17 @@
 
 <script setup>
 import { onMounted, reactive, ref, toRaw, watch } from "vue-demi";
-import { WhatIfView, TREND } from './main';
+import { WhatIfView, TREND, GANTT } from './main';
 
 const props = defineProps(['plateStati', 'gantData']);
 
 const menuId = 'WhatIfMain';
-const viewWidth = ref(0);
-const viewHeight = ref(0);
 let renderInstance = null;
 onMounted(() => {
   const ele = document.getElementById(menuId);
-  viewWidth.value = ele.offsetWidth;
-  viewHeight.value = ele.offsetHeight;
-  renderInstance = new WhatIfView(viewWidth.value, viewHeight.value, ele);
+  const viewWidth = ele.offsetWidth;
+  const viewHeight = ele.offsetHeight;
+  renderInstance = new WhatIfView({ width: viewWidth, height: viewHeight }, ele);
 })
 
 
@@ -29,8 +27,7 @@ watch(plateStati, () => {
 // 绘制甘特图
 const gantData = props.gantData;
 watch(gantData, () => {
-  // console.log('绘制甘特图');
-  // console.log('数据: ', gantData.value);
+  renderInstance.render(GANTT, toRaw(gantData.value));
 });
 
 </script>

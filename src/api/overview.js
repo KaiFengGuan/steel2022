@@ -28,6 +28,13 @@ export function getPlatesStatistics (interval, dateStart, dateEnd) {
   })
 }
 
+export function getGantData (dateStart, dateEnd) {
+  return request({
+    url: `/v2.0/GanttChartApi/${dateStart}/${dateEnd}/`,
+    method: 'get'
+  })
+}
+
 export function scattorData (algOpt, dateStart, dateEnd, data) {
   let algorithm = ALGORITHM_SELECT[algOpt];
 

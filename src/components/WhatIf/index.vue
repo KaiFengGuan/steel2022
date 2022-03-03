@@ -19,9 +19,11 @@ import { useStore } from "vuex";
 
 import { HEIGHT } from './size';
 import WhatIfMain from './WhatIfMain.vue';
-import { getPlatesStatistics } from '@/api/overview';
+import { getPlatesStatistics, getGantData } from '@/api/overview';
 
+// 离线数据
 import platesStatistics from '@/data/platesStatistics.json';
+import ganttData from '@/data/ganttData.json';
 
 const store = useStore();
 const monthPickDate = computed(() => store.state.monthPickDate);
@@ -40,10 +42,11 @@ watch(monthPickDate, () => {
 });
 watch(brushDate, () => {
   // 获取甘特图数据
+  // getGantData(brushDate.value[0], brushDate.value[1])
+  //   .then(res => gantData.value = res.data);
   setTimeout(() => {
-    console.log('已拿到甘特图数据')
-    gantData.value = {a: 1};
-  }, 5000);
+    gantData.value = ganttData;
+  }, 10);
 })
 
 </script>

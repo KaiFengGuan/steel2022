@@ -5,13 +5,17 @@ import store from '@/store';
 import { SET_BRUSH_DATE } from '@/store/actionTypes';
 
 export default class TrendView extends SuperGroupView {
-  constructor(w, h, parentNode, tooltipIns, rootName) {
-    super(w, h, parentNode, rootName);
+  constructor({
+    width,
+    height,
+    moveX = 0,
+    moveY = 0,
+  } = {}, parentNode, tooltipIns, rootName) {
+    super({ width, height, moveX, moveY }, parentNode, rootName);
 
     this._rootName = rootName;
     this._key = ['bad_flag', 'good_flag', 'no_flag'];
     this._tooltip = tooltipIns;
-    console.log(this._tooltip)
   }
 
   /**

@@ -18,14 +18,17 @@ class SuperView {
 import * as d3 from 'd3';
 
 export class SuperSVGView extends SuperView {
-  constructor (w, h, ele) {
-    super(w, h);
+  constructor ({
+    width,
+    height,
+  } = {}, ele) {
+    super(width, height);
 
     this._container = d3.select(ele)
       .append('svg')
       .attr('class', 'root-svg')
-      .attr('width', w)
-      .attr('height', h);
+      .attr('width', width)
+      .attr('height', height);
   }
 
 }
@@ -34,12 +37,18 @@ export class SuperSVGView extends SuperView {
  * 定义 SVG Group 节点的超类
  */
 export class SuperGroupView extends SuperView {
-  constructor (w, h, parentNode, rootName) {
-    super(w, h);
+  constructor ({
+    width = 0,
+    height = 0,
+    moveX = 0,
+    moveY = 0,
+  } = {}, parentNode, rootName) {
+    super(width, height);
 
     this._parent = parentNode;
     this._container = parentNode.append('g')
-      .attr('id', rootName);
+      .attr('id', rootName)
+      .attr('transform', `translate(${[moveX, moveY]})`);
     this._margin = { top: 10, bottom: 10, left: 10, right: 10 };
   }
 
