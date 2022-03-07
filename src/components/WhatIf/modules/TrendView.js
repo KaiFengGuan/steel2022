@@ -3,6 +3,7 @@ import { SuperGroupView } from '@/utils/renderClass';
 import { labelColor } from '@/utils/setting';
 import store from '@/store';
 import { SET_BRUSH_DATE } from '@/store/actionTypes';
+import { Boundary } from './Boundary';
 
 export default class TrendView extends SuperGroupView {
   constructor({
@@ -103,6 +104,7 @@ export default class TrendView extends SuperGroupView {
       .on('end', ({selection}) => that.#brushEnd(selection, xDomain, xScale));
 
     barGroup.append('g')
+      .attr('class', 'trend-brush')
       .call(brush)
       // .call(brush.move, [3, 5].map(x))
   }
@@ -117,6 +119,9 @@ export default class TrendView extends SuperGroupView {
       }
       eles.attr('opacity', d => computedOpacity(d) ? 1 : 0.2);
     }
+    
+    let brushGroup = this._container.select('.trend-brush');
+    brushGroup.call(g => this.#brushHandle.call(this, g, selection));
   }
 
   #brushEnd(selection, xDomain, xScale) {
@@ -127,5 +132,25 @@ export default class TrendView extends SuperGroupView {
     })
     let newState = [brushRange[0], brushRange.slice(-1)[0]];
     store.dispatch(SET_BRUSH_DATE, newState);  // 派发修改state: 刷选的时间
+  }
+
+  #brushHandle (g, selection) {
+    g.selectAll(".handle--custom")
+      .data([{type: "w"}, {type: "e"}])
+      .join(
+        enter => {
+          enter.append("path")
+            .attr("class", "handle--custom")
+            .attr("fill", "#666")
+            .attr("cursor", "ew-resize")
+            .attr("d", (_, i) => Boundary.brush({
+              width: 10,
+              height: this._viewHeight - this._margin.top - this._margin.bottom,
+              direction: i === 0 ? 'left' : 'right' 
+            }))
+        }
+      )
+      .attr("display", selection === null ? "none" : null)
+      .attr("transform", selection === null ? null : (d, i) => `translate(${selection[i]},${this._margin.top})`)
   }
 }
