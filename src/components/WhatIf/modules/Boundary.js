@@ -36,7 +36,25 @@ export class Boundary {
     return `M${point.join("L")}Z`;
   }
 
-  static batch({} = {}) {
-
+  static batch({
+    width = 3,
+    height = 15,
+  } = {}) {
+    let wCenter = width / 2;
+    let triHeight = width * 0.866;  // w * cos(30°)
+    let barWidth = width / 10;
+  
+    let point = [
+      [0, -triHeight],
+      [wCenter, -triHeight],
+      [barWidth / 2, 0],
+      [barWidth / 2, height - triHeight],
+      [-barWidth / 2, height - triHeight],
+      [-barWidth / 2, 0],
+      [-wCenter, -triHeight],
+      [0, -triHeight]
+    ];
+    
+    return `M${point.join("L")}Z`;
   }
 }
