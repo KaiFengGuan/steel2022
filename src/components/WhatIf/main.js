@@ -24,6 +24,7 @@ export class WhatIfView extends SuperSVGView {
         this._trendView.joinData(TREND, value).render();
         break;
       case GANTT:
+        this._ganttView.joinInstance('trendView', this._trendView);
         this._ganttView.joinData(GANTT, value).render();
         break;
       default:

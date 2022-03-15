@@ -17,6 +17,8 @@ export default class TrendView extends SuperGroupView {
     this._rootName = rootName;
     this._key = ['bad_flag', 'good_flag', 'no_flag'];
     this._tooltip = tooltipIns;
+
+    this._xScale = undefined;
   }
 
   /**
@@ -61,6 +63,19 @@ export default class TrendView extends SuperGroupView {
     return this;
   }
 
+  updateXSelect(disDomain) {  // 提示gantt图显示的区域
+    const tranY = this._viewHeight;
+    this._container.selectAll('.zoom-range')
+      .data(['left', 'right'], d => d)
+      .join(
+        enter => enter.append('path')
+          .attr('class', 'zoom-range')
+          .attr('fill', 'red')
+          .attr('d', Boundary.zoomDisArea({ width: 10, height: 10 })),
+      )
+      .attr('transform', (d, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
+  }
+
   #renderStackBar(data, {
     width = 640, // outer width, in pixels
     height, // outer height, in pixels
@@ -82,6 +97,7 @@ export default class TrendView extends SuperGroupView {
     
     const xScale = d3.scaleBand(xDomain, xRange).paddingInner(yPadding);
     const yScale = d3.scaleLinear(yDomain, yRange);
+    this._xScale = d3.scaleTime([new Date(xDomain[0]), new Date(xDomain[xDomain.length - 1])], xRange);
 
     const bar = barGroup
       .selectAll('.stack-bar')

@@ -2,35 +2,12 @@ import * as d3 from 'd3';
 import { SuperGroupView } from '@/utils/renderClass';
 import { labelColor, labelColorMap } from '@/utils/setting';
 import { Boundary } from './Boundary';
-
-function getTransformFromXScales (initialScale, frameScale, range = initialScale.range()) {
-  // For dates, get the time instead of the date objects
-  const initialDomain = initialScale.domain().map(d => d.getTime());
-  const frameDomain = frameScale.domain().map(d => d.getTime());
-
-  const frameDomainLength = frameDomain[1] - frameDomain[0];
-  const initialDomainLength = initialDomain[1] - initialDomain[0];
-  const rangeLength = range[1] - range[0];
-  const midpoint = (initialDomain[0] + initialDomain[1]) / 2;
-  const rangeConversion = rangeLength / initialDomainLength;
-
-  // Get scale from domain lengths
-  const k = initialDomainLength / frameDomainLength;
-
-  // Figure out where the initial domain midpoint falls on the initial domain and the frame domain,
-  // as a ratio of the distance-from-the-lower-domain-bound-to-the-midpoint to the appropriate
-  // domain length.
-  const midpointInitialRatio = (midpoint - initialDomain[0]) / initialDomainLength;
-  const midpointFrameRatio = (midpoint - frameDomain[0]) / frameDomainLength;
-
-  // Calculate the ratio translation required to move the initial midpoint ratio to its
-  // location on the frame domain. Then convert to domain units, and finally range units.
-  const midpointRatioTranslation = midpointFrameRatio - midpointInitialRatio * k;
-  const domainXTranslation = midpointRatioTranslation * initialDomainLength;
-  const rangeXTranslation = domainXTranslation * rangeConversion;
-
-  return d3.zoomIdentity.translate(rangeXTranslation, 0).scale(k);
-}
+import InfoView from './InfoView';
+import {
+  getTransformFromXScales,
+  getBatchDisplayInfoData,
+  comeFromRight,
+} from './utils';
 
 export default class GanttView extends SuperGroupView {
   constructor({
@@ -45,6 +22,13 @@ export default class GanttView extends SuperGroupView {
     this._key = ['bad_flag', 'good_flag', 'no_flag'];
     this._tooltip = tooltipIns;
     this._margin = { top: 50, bottom: 10, left: 10, right: 10 };
+    this._xScale = null;
+    this._displayScale = null;
+
+    this._batchDisplayMap = new Map();  // 储存显示的图元实例
+    this._batchDisplayDat = new Map();  // 储存需要显示的数据
+
+    this._instanceKey = [];
   }
 
   /**
@@ -69,7 +53,6 @@ export default class GanttView extends SuperGroupView {
       let max = Math.max(...a);
       return labelColor[a.indexOf(max)];
     }
-
     return this;
   }
 
@@ -83,6 +66,7 @@ export default class GanttView extends SuperGroupView {
     const xDomain = this._xScale.domain();
     const timeSpan = (xDomain[1].getTime() - xDomain[0].getTime()) * 0.3;
     const xMock = this._xScale.copy().domain([new Date(xDomain[0].getTime() + timeSpan), new Date(xDomain[1].getTime() - timeSpan)]);
+    this._displayScale = xMock;
 
     this.#renderZoom(xMock);
     const ganttBatch = this._container.selectAll('.ganttBatch')
@@ -97,6 +81,18 @@ export default class GanttView extends SuperGroupView {
     return this;
   }
 
+  /**
+   * 跨视图交互
+   */
+  joinInstance(key, ins) {
+    this[key] = ins;
+    this._instanceKey.push(key);
+  }
+  #updateOtherInstance() { // 需要更新相关实例: 参数是与zoom相关的横轴, 这里传的是一个范围
+    const disDomain = this._displayScale.domain();
+    this._instanceKey.forEach(cls => this[cls].updateXSelect(disDomain));
+  }
+  
   #width = (d, x) => x(new Date(d.endTime)) - x(new Date(d.startTime));
 
   #ganttContent(group, xScale) {
@@ -142,7 +138,7 @@ export default class GanttView extends SuperGroupView {
     const x1y1 = [this._margin.left, this._margin.top];
     const x2y2 = [this._viewWidth - this._margin.right, this._viewHeight - this._margin.bottom];
     const zoom = d3.zoom()
-      .scaleExtent([1, 32])
+      .scaleExtent([1, 15])
       .extent([x1y1, x2y2])
       .translateExtent([[x1y1[0], -Infinity], [x2y2[0], Infinity]])
       .on('zoom', e => this.#zoomed.call(this, e));
@@ -161,7 +157,13 @@ export default class GanttView extends SuperGroupView {
 
   #zoomed(event) {
     const xz = event.transform.rescaleX(this._xScale);
+    this._displayScale = xz;
     this.#transAll(xz);
+    this.#updateOtherInstance();
+
+    // 过滤计算得到显示的数据
+    const displayData = getBatchDisplayInfoData(xz, this._rawData);
+    this.#batchInfoRender(xz, displayData, this._batchDisplayMap);
   }
 
   #transAll(newX) {
@@ -173,5 +175,43 @@ export default class GanttView extends SuperGroupView {
     
     this._container.selectAll('.batch-boundary')
       .attr('transform', d => `translate(${newX(new Date(d.startTime))}, 0)`)
+  }
+
+  #batchInfoRender(newX, data, instanceMap) {
+    const that = this;
+    const idList = data.keys();
+    const infoW = 50;
+    const infoH = 50;
+    const computedTrans = d => `translate(${[200 + data.get(d).count * (infoW + 20), 150]})`;
+    const t = this._container.transition().duration(100);
+
+    this._container.selectAll('.info-root')
+      .data(idList, d => d)
+      .join(enterHandle, updateHandle, exitHandle)
+    
+    function enterHandle(enter) {
+      enter.append('g')
+        .attr('class', 'info-root')
+        .attr('custom--handle', function (d) {
+          const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, d);
+          instanceMap.set(d, instance);
+          instance.joinData(data.get(d), newX).render();
+        })
+        .attr('transform', d => `translate(${[0, 150]})`)
+      .call(enter => enter.transition(t)
+        .attr('transform', computedTrans))
+    }
+    function updateHandle(update) {
+      update.transition(t)
+        .attr('transform', computedTrans)
+    }
+    function exitHandle(exit) {
+      exit.attr('custom--handle', d => {
+        instanceMap.delete(d);
+      })
+      .call(g => g.transition(t)
+        .attr('opacity', 0)
+        .remove())
+    }
   }
 }

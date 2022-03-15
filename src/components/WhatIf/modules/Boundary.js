@@ -57,4 +57,20 @@ export class Boundary {
     
     return `M${point.join("L")}Z`;
   }
+
+  static zoomDisArea({
+    width = 3,
+    height = 3,
+  } = {}) {
+    const wStep = width / 2;
+    
+    let point = [
+      [0, 0],
+      [wStep, height],
+      [-wStep, height],
+      [0, 0]
+    ];
+    
+    return `M${point.join("L")}Z`;
+  }
 }
