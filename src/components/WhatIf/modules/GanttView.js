@@ -31,9 +31,7 @@ export default class GanttView extends SuperGroupView {
     this._instanceKey = [];
   }
 
-  /**
-   * 添加原始数据，并转换为绘图数据
-   */
+  // 添加原始数据，并转换为绘图数据
   joinData(key, value) {
     this._rawData = value;
     this._rawData.sort((a, b) => {
@@ -56,9 +54,7 @@ export default class GanttView extends SuperGroupView {
     return this;
   }
 
-  /**
-   * 绘制内容
-   */
+  // 绘制内容
   render() {
     console.log('绘制甘特图', this)
     console.log('数据:', this._rawData);
@@ -81,9 +77,7 @@ export default class GanttView extends SuperGroupView {
     return this;
   }
 
-  /**
-   * 跨视图交互
-   */
+  // 跨视图交互
   joinInstance(key, ins) {
     this[key] = ins;
     this._instanceKey.push(key);
@@ -142,8 +136,6 @@ export default class GanttView extends SuperGroupView {
       .extent([x1y1, x2y2])
       .translateExtent([[x1y1[0], -Infinity], [x2y2[0], Infinity]])
       .on('zoom', e => this.#zoomed.call(this, e));
-
-    const newTransform = getTransformFromXScales(this._xScale, xMock);  // Calculate what the transform should be to achieve the mocked scale
     
     this._container.append('rect')
       .attr('fill', 'white')
@@ -151,6 +143,7 @@ export default class GanttView extends SuperGroupView {
       .attr('y', x1y1[1])
       .attr('width', x2y2[0] - x1y1[0])
       .attr('height', x2y2[1] - x1y1[1]);
+    const newTransform = getTransformFromXScales(this._xScale, xMock);
     this._container.call(zoom.transform, newTransform); // Update the transform to the calculated one. Without this update, the chart will be jump back to it's initial domain when panning/zooming
     this._container.call(zoom);
   }
@@ -161,7 +154,7 @@ export default class GanttView extends SuperGroupView {
     this.#transAll(xz);
     this.#updateOtherInstance();
 
-    // 过滤计算得到显示的数据
+    // 过滤计算得到显示的规格数据
     const displayData = getBatchDisplayInfoData(xz, this._rawData);
     this.#batchInfoRender(xz, displayData, this._batchDisplayMap);
   }
@@ -182,32 +175,38 @@ export default class GanttView extends SuperGroupView {
     const idList = data.keys();
     const infoW = 50;
     const infoH = 50;
-    const computedTrans = d => `translate(${[200 + data.get(d).count * (infoW + 20), 150]})`;
+    const computedOffset = d => 200 + data.get(d).count * (infoW + 20);
+    const computedTrans = d => `translate(${[computedOffset(d), 150]})`;
     const t = this._container.transition().duration(100);
 
     this._container.selectAll('.info-root')
-      .data(idList, d => d)
+      .data(idList, id => id)
       .join(enterHandle, updateHandle, exitHandle)
     
     function enterHandle(enter) {
       enter.append('g')
         .attr('class', 'info-root')
-        .attr('custom--handle', function (d) {
-          const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, d);
-          instanceMap.set(d, instance);
-          instance.joinData(data.get(d), newX).render();
+        .attr('custom--handle', function (id) {
+          const offset = computedOffset(id);
+          const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, id);
+          instanceMap.set(id, instance);
+          instance.joinData(data.get(id)).initState(newX, offset).render();
         })
         .attr('transform', d => `translate(${[0, 150]})`)
       .call(enter => enter.transition(t)
         .attr('transform', computedTrans))
     }
     function updateHandle(update) {
-      update.transition(t)
-        .attr('transform', computedTrans)
+      update.attr('custom--handle', id => {
+        const offset = computedOffset(id);
+        instanceMap.get(id).initState(newX, offset).update();
+      })
+      .call(g => g.transition(t)
+        .attr('transform', computedTrans))
     }
     function exitHandle(exit) {
-      exit.attr('custom--handle', d => {
-        instanceMap.delete(d);
+      exit.attr('custom--handle', id => {
+        instanceMap.delete(id);
       })
       .call(g => g.transition(t)
         .attr('opacity', 0)

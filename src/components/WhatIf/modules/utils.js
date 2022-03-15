@@ -1,9 +1,12 @@
 
 /**
- * 一些 数据处理 逻辑函数
+ * 一些 数据处理逻辑 函数
  */
 import * as d3 from 'd3';
 
+/**
+ * Calculate what the transform should be to achieve the mocked scale
+ */
 export function getTransformFromXScales (initialScale, frameScale, range = initialScale.range()) {
   // For dates, get the time instead of the date objects
   const initialDomain = initialScale.domain().map(d => d.getTime());
