@@ -3,8 +3,12 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, toRaw, watch } from "vue-demi";
-import { WhatIfView, TREND } from './main';
+import { onMounted, reactive, ref, toRaw, watch, watchEffect } from "vue-demi";
+import { WhatIfView, TREND, TEMPORAL } from './main';
+// import { getDiagnosisData } from "@/api/diagnosis";
+// import temporalData from '@/data/temporalData.json'
+import batchData from '@/data/batchData.json'
+console.log(batchData)
 
 const props = defineProps(['plateStati', 'gantData']);
 
@@ -35,5 +39,27 @@ watch(gantData, () => {
   // console.log('绘制甘特图');
   // console.log('数据: ', gantData.value);
 });
+
+
+// watchEffect(() => {
+//   // console.log(temporalData)
+//   // renderInstance.render(TEMPORAL, temporalData);
+// })
+let time = ref(0);
+setTimeout(()=>{
+  time.value = 1
+})
+watch(time, () => {
+  console.log(batchData)
+  renderInstance.render(TEMPORAL, batchData);
+});
+// console.log(modulesFiles)
+// watch(selectDate, () => {
+//   getDiagnosisData('2021-01-03%2000:00:00', '2021-01-03%2012:00:00', )
+// })
+// ["slabthickness", "tgtdischargetemp", "tgtplatethickness", "tgtwidth",
+//     "tgtplatelength2", "tgttmplatetemp", "cooling_start_temp",
+//     "cooling_stop_temp", "cooling_rate1", "productcategory", "steelspec",
+//     "status_cooling" , "fqcflag"];
 
 </script>
