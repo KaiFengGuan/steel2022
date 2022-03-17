@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 
-export function diagnosisData (dateStart, dateEnd, data) {
+export function getDiagnosisData (dateStart, dateEnd, data) {
   return request({
     url: `/v1.0/baogangPlot/diagnosesdatabytime/${dateStart}/${dateEnd}/default/1000`,
     method: 'post',
