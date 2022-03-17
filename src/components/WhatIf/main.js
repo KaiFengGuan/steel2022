@@ -2,10 +2,13 @@ import { SuperSVGView } from '@/utils/renderClass';
 import { TooltipClass } from '@/components/Tooltip/main';
 import TrendView from './modules/TrendView';
 import GanttView from './modules/GanttView';
-import { TREND_HEIGHT, GANTT_HEIGHT } from './size';
+import TemporalView from './modules/TemporalView';
+import { TREND_HEIGHT, GANTT_HEIGHT, TEMPORAL_HEIGHT } from './size';
 
 export const TREND = 'trend';
 export const GANTT = 'gantt';
+export const TEMPORAL = 'temporal';
+
 
 export class WhatIfView extends SuperSVGView {
   constructor ({ width, height }, ele) {
@@ -16,16 +19,21 @@ export class WhatIfView extends SuperSVGView {
     
     this._trendView = new TrendView({ width: width, height: TREND_HEIGHT, moveY: 0 }, this._container, this._tooltipInstance, 'trend-view-root');
     this._ganttView = new GanttView({ width: width, height: GANTT_HEIGHT, moveY: TREND_HEIGHT }, this._container, this._tooltipInstance, 'gantt-view-root');
+    // this._temporalView = new TemporalView(w, h - TEMPORAL_HEIGHT, this._container, 'temporal-view-root', TEMPORAL_HEIGHT);
   }
 
   render(key, value) {
     switch(key) {
       case TREND:
+        // console.log('TREND')
         this._trendView.joinData(TREND, value).render();
         break;
       case GANTT:
         this._ganttView.joinInstance('trendView', this._trendView);
         this._ganttView.joinData(GANTT, value).render();
+      case TEMPORAL:
+        // console.log('TEMPORAL')
+        // this._temporalView.joinData(TEMPORAL, value).render()
         break;
       default:
         break;

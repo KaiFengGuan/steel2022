@@ -63,3 +63,7 @@ export function convertFloat (f, n) {
   let p = Math.pow(10, n)
   return Math.round(f * p) / p
 }
+
+export * from './element';
+export * from './setting';
+export * from './renderClass';
