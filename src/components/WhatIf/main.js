@@ -19,7 +19,7 @@ export class WhatIfView extends SuperSVGView {
     
     this._trendView = new TrendView({ width: width, height: TREND_HEIGHT, moveY: 0 }, this._container, this._tooltipInstance, 'trend-view-root');
     this._ganttView = new GanttView({ width: width, height: GANTT_HEIGHT, moveY: TREND_HEIGHT }, this._container, this._tooltipInstance, 'gantt-view-root');
-    // this._temporalView = new TemporalView(w, h - TEMPORAL_HEIGHT, this._container, 'temporal-view-root', TEMPORAL_HEIGHT);
+    this._temporalView = new TemporalView({ width: width, height: height - TEMPORAL_HEIGHT, moveY: TEMPORAL_HEIGHT }, this._container, this._tooltipInstance, 'temporal-view-root');
   }
 
   render(key, value) {
@@ -33,7 +33,7 @@ export class WhatIfView extends SuperSVGView {
         this._ganttView.joinData(GANTT, value).render();
       case TEMPORAL:
         // console.log('TEMPORAL')
-        // this._temporalView.joinData(TEMPORAL, value).render()
+        this._temporalView.joinData(TEMPORAL, value).render()
         break;
       default:
         break;

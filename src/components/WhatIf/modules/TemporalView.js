@@ -19,9 +19,13 @@ import { SuperGroupView,
 
 // console.log(sampleData)
 export default class TemporalView extends SuperGroupView {
-  constructor(w, h, parentNode, rootName, height) {
-    super(w, h, parentNode, rootName);
-    this._container.attr("transform", `translate(0, ${height})`)
+  constructor({
+    width,
+    height,
+    moveX = 0,
+    moveY = 0,
+  } = {}, parentNode, tooltipIns, rootName){
+    super({ width, height, moveX, moveY }, parentNode, rootName);
     this._rootName = rootName;
   }
 
