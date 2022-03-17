@@ -132,3 +132,7 @@ export function arrowData(data){
   // // if(obj.intersection.length !== 0)console.log(obj.intersection)
   // return obj;
 }
+
+export function getID(length = 5){  //随机数 + 时间戳 生成唯一ID
+  return Number(Math.random().toString().substr(3,length) + Date.now()).toString(36);
+}

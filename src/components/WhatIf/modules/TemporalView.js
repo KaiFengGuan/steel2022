@@ -13,7 +13,8 @@ import { SuperGroupView,
   mergeColor,
   updateChildrenNodes,
   zoomIcon,
-  createIcon
+  createIcon,
+  getID
 } from "@/utils";
 
 // console.log(sampleData)
@@ -213,6 +214,7 @@ export default class TemporalView extends SuperGroupView {
     this.reflow();
     this.#renderSingleRow();
     d3.selectAll(".labelGroup").nodes().map(d => this.#joinBatchElement(d3.select(d)));
+    // this._currentKeys
     // // updateChildrenNodes(this, this._container.selectAll(".labelGroup"), this.#joinBatchElement)
     // this._container.selectAll(".labelGroup").nodes().map(d => this.#joinBatchElement(d3.select(d)))
   }
@@ -586,32 +588,24 @@ export default class TemporalView extends SuperGroupView {
     .append("g")
     .call(g => updateElement(g, groupAttrs))
     .each(function(d){
-        // d => this._labelDetails[d].height - this._cardMargin.top - this._cardMargin.bottom
         let arr = Object.values(context._upidDetails).map(e => e.dimens[d].value),
           data = d3.bin().thresholds(20)(arr),
           container = d3.select(this),
           xDomain = [data[0].x0, data[data.length - 1].x1],
           height = context._labelDetails[d].height - context._cardMargin.top - context._cardMargin.bottom,
           bad = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 0).map(e => e.dimens[d].value)),
-          good = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 1).map(e => e.dimens[d].value)),
-          ymax = Math.max(d3.max(good, d => d.length), d3.max(bad, d => d.length));
-        d3.select(this).call(g => updateElement(g, groupAttrs))
+          good = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 1).map(e => e.dimens[d].value));
+          // ymax = Math.max(d3.max(good, d => d.length), d3.max(bad, d => d.length));
+        d3.select(this).call(g => updateElement(g, groupAttrs));
         new barView(Object.assign({
           container: container,
-          data: bad,
+          data: [bad, good],
+          status: d3.max(good, d => d.length) > d3.max(bad, d => d.length),//data number Boolen
           xDomain,
           height,
-          yDomain: [0, ymax],
-          color: mergeColor[0],
-          opacity: 0.5
-        }, options)).render()
-        new barView(Object.assign({
-          container: container,
-          data: good,
-          xDomain,
-          height,
-          yDomain: [0, ymax],
-          color: mergeColor[1]
+          // yDomain: [0, ymax],
+          color: mergeColor,
+          opacity: [0.5, 0.8]
         }, options)).render()
       })
       // .selectAll(".indexBar").data(d => this)
@@ -734,14 +728,14 @@ class barView{
       yAccessor : d => d, // given d in data, returns the (quantitative) y-value
       marginTop : 1, // the top margin, in pixels
       marginRight : 5, // the right margin, in pixels
-      marginBottom : 1, // the bottom margin, in pixels
+      marginBottom : 0, // the bottom margin, in pixels
       marginLeft : 5, // the left margin, in pixels
       width : 200, // the outer width of the chart, in pixels
       height : 50, // the outer height of the chart, in pixels
       xRange : () => [this._marginLeft, this._width - this._marginRight], // [left, right]
       yType : d3.scaleLinear, // y-scale type
       xDomain : [0, 1], // [xmin, xmax]
-      yDomain: [0, 1], // [ymin, ymax]
+      // yDomain: null, // [ymin, ymax]
       yRange : () => [this._height - this._marginBottom, this._marginTop], // [bottom, top]
       color : "currentColor", // river fill color
       opacity : 1
@@ -754,6 +748,9 @@ class barView{
         this["_" + item] = options[item];
       }
     }
+
+    this._uid = getID();
+    console.log(this._uid)
     console.log(this);
     // if(data.length === 1){
     //   console.log(data)
@@ -765,8 +762,8 @@ class barView{
   _initScale(){
      // Compute values.
     // console.log(data)
-    const X = d3.map(this._data, this._xAccessor);
-    const Y = d3.map(this._data, this._yAccessor);
+    const X = d3.map(this._data.flat(), this._xAccessor);
+    const Y = d3.map(this._data.flat(), this._yAccessor);
     // console.log("x, y", X, Y);
   
     // Compute default domains, and unique the x-domain.
@@ -789,33 +786,33 @@ class barView{
 
   render(){
     this._initScale();
-      // console.log(area(data))
     this._container
       .append("rect")
       .attr("height", this._height)
       .attr("width", this._width)
-      .attr("class", "background")
+      .attr("class", "background" + this._uid)
       .attr("fill", "white")
       .attr("opacity", 0);
-    this._container
-      .append("path")
-      .attr("class", "riverChart")
-      .attr("fill", this._color)
-      .attr("opacity", this._opacity)
-      // .attr("stroke", "none")
-      .attr("d", this._area(this._data));
+    this._container.selectAll('path').data([0, 1]).join('path')
+      .attr("class", "riverChart" + this._uid)
+      .attr("fill", d => this._color[d])
+      .attr("opacity", d =>  this._opacity[d])
+      .attr("d", d => this._area(this._data[d]));
+    
   }
-  reRender(options, transition = d3.transition().duration(300)){
+  reRender(options, t = d3.transition().duration(300)){
     for(let item in options){
       this["_" + item] = options[item];
     }
     this.initScale()
-    this._container.select(".background").transition(transition)
+    this._container.select(".background" + this._uid)
+      .transition(t)
       .attr("height", this._height)
       .attr("width", this._width)
-    this._container.select(".riverChart").transition(transition)
-      .attr("fill", this._color)
-      .attr("opacity", this._opacity)
-      .attr("d", this._area(this._data))
+    this._container.select(".riverChart" + this._uid)
+      .transition(t)
+      .attr("fill", d => this._color[d])
+      .attr("opacity", d =>  this._opacity[d])
+      .attr("d", d => this._area(this._data[d]));
   }
 }
