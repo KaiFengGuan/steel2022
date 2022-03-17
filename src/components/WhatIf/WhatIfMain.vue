@@ -3,8 +3,8 @@
 </template>
 
 <script setup>
+import { WhatIfView, TREND, GANTT, TEMPORAL } from './main';
 import { onMounted, reactive, ref, toRaw, watch, watchEffect } from "vue-demi";
-import { WhatIfView, TREND, TEMPORAL } from './main';
 // import { getDiagnosisData } from "@/api/diagnosis";
 // import temporalData from '@/data/temporalData.json'
 import batchData from '@/data/batchData.json'
@@ -13,31 +13,25 @@ console.log(batchData)
 const props = defineProps(['plateStati', 'gantData']);
 
 const menuId = 'WhatIfMain';
-const viewWidth = ref(0);
-const viewHeight = ref(0);
 let renderInstance = null;
 onMounted(() => {
   const ele = document.getElementById(menuId);
-  viewWidth.value = ele.offsetWidth;
-  viewHeight.value = ele.offsetHeight;
-  renderInstance = new WhatIfView(viewWidth.value, viewHeight.value, ele);
+  const viewWidth = ele.offsetWidth;
+  const viewHeight = ele.offsetHeight;
+  renderInstance = new WhatIfView({ width: viewWidth, height: viewHeight }, ele);
 })
 
 
 // 绘制生产趋势统计数据
 const plateStati = props.plateStati;
 watch(plateStati, () => {
-  console.log('绘制生产趋势统计数据');
-  console.log('数据: ', plateStati.value)
-  
   renderInstance.render(TREND, toRaw(plateStati.value));
 });
 
 // 绘制甘特图
 const gantData = props.gantData;
 watch(gantData, () => {
-  // console.log('绘制甘特图');
-  // console.log('数据: ', gantData.value);
+  renderInstance.render(GANTT, toRaw(gantData.value));
 });
 
 

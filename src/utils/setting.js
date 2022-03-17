@@ -2,6 +2,11 @@
 
 // 颜色定义
 export const labelColor = ['#c65b24', '#94a7b7', '#71797e']; // [bad, good, noflag]
+export const labelColorMap = {
+  0: '#c65b24',   // bad
+  1: '#94a7b7',   // good
+  404: '#71797e', // noFlag
+}
 export const processColor =['#fcd8a9','#cce9c7','#c1c9ee'];  // [heat, roll, cool]
 
 export const mergeColor = ["#e3ad92",   "#b9c6cd"];

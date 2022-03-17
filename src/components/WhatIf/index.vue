@@ -19,18 +19,23 @@ import { useStore } from "vuex";
 
 import { HEIGHT } from './size';
 import WhatIfMain from './WhatIfMain.vue';
-import { getPlatesStatistics } from '@/api/overview';
+import { getPlatesStatistics, getGantData } from '@/api/overview';
 
+// 离线数据
 import platesStatistics from '@/data/platesStatistics.json';
+import ganttData from '@/data/ganttData.json';
 
 const store = useStore();
 const monthPickDate = computed(() => store.state.monthPickDate);
+const brushDate = computed(() => store.state.brushDate);
 
 let plateStati = reactive({ value: {} });
 let gantData = reactive({ value: {}});
 
 watch(monthPickDate, () => {
   // 获取生产趋势统计数据
+  // getPlatesStatistics(5, monthPickDate.value[0], monthPickDate.value[1])
+  //   .then(res => plateStati.value = res.data);
   // getPlatesStatistics(10, monthPickDate.value[0], monthPickDate.value[1])
   //   .then(res => plateStati.value = res.data);
   // setTimeout(() => {
@@ -39,9 +44,17 @@ watch(monthPickDate, () => {
 
   // 获取甘特图数据
   setTimeout(() => {
-    gantData.value = {a: 1};
-  }, 5000);
+    plateStati.value = platesStatistics;
+  }, 10);
 });
+watch(brushDate, () => {
+  // 获取甘特图数据
+  // getGantData(brushDate.value[0], brushDate.value[1])
+  //   .then(res => gantData.value = res.data);
+  setTimeout(() => {
+    gantData.value = ganttData;
+  }, 10);
+})
 
 </script>
 

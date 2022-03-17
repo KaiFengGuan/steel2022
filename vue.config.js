@@ -14,8 +14,7 @@ module.exports = defineConfig({
     port: port,
     proxy: {
       '/newbaogangapi': {
-        target: 'http://219.216.80.146:5502', // 613服务器后台
-        // target: 'http://localhost:5502',      // 本机服务器 后台
+        target: 'http://219.216.80.146:5504', // 2022可视化系统后台
         changeOrigin: true,
         pathRewrite: {
           '^/newbaogangapi': '/api'

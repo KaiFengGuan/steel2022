@@ -1,14 +1,24 @@
 import * as d3 from 'd3';
 import { SuperGroupView } from '@/utils/renderClass';
 import { labelColor } from '@/utils/setting';
+import store from '@/store';
+import { SET_BRUSH_DATE } from '@/store/actionTypes';
+import { Boundary } from './Boundary';
 
 export default class TrendView extends SuperGroupView {
-  constructor(w, h, parentNode, rootName) {
-    super(w, h, parentNode, rootName);
+  constructor({
+    width,
+    height,
+    moveX = 0,
+    moveY = 0,
+  } = {}, parentNode, tooltipIns, rootName) {
+    super({ width, height, moveX, moveY }, parentNode, rootName);
 
     this._rootName = rootName;
-    this._xScale = null;
-    this._yScale = null;
+    this._key = ['bad_flag', 'good_flag', 'no_flag'];
+    this._tooltip = tooltipIns;
+
+    this._xScale = undefined;
   }
 
   /**
@@ -28,7 +38,7 @@ export default class TrendView extends SuperGroupView {
       })
     }
     this._stackData = d3.stack()
-      .keys(['bad_flag', 'good_flag', 'no_flag'])
+      .keys(this._key)
       .order(d3.stackOrderNone)
       .offset(d3.stackOffsetNone)(dataFlat)
 
@@ -40,7 +50,7 @@ export default class TrendView extends SuperGroupView {
       this._rawData.good_flag,
       (d, i) => d + this._rawData.bad_flag[i] + this._rawData.no_flag[i]);
     
-    this._container.selectAll('g').remove();  // 先清空container
+    this._container.selectChildren().remove();  // 先清空container
     
     const options = {
       width: this._viewWidth,
@@ -51,6 +61,19 @@ export default class TrendView extends SuperGroupView {
     }
     this.#renderStackBar(this._stackData, options);
     return this;
+  }
+
+  updateXSelect(disDomain) {  // 提示gantt图显示的区域
+    const tranY = this._viewHeight;
+    this._container.selectAll('.zoom-range')
+      .data(['left', 'right'], d => d)
+      .join(
+        enter => enter.append('path')
+          .attr('class', 'zoom-range')
+          .attr('fill', 'red')
+          .attr('d', Boundary.zoomDisArea({ width: 10, height: 10 })),
+      )
+      .attr('transform', (d, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
   }
 
   #renderStackBar(data, {
@@ -67,28 +90,83 @@ export default class TrendView extends SuperGroupView {
     yPadding = 0.1, // amount of y-range to reserve to separate bars
     colors = d3.schemeTableau10, // array of colors
   } = {}) {
-    const X = d3.map(data, (d, i) => i);
+    const that = this;
     const barGroup = this._container.append('g')
       .attr('class', 'trend-stack-bar-group')
       .attr('transform', `translate(${[marginLeft, marginTop]})`);
     
     const xScale = d3.scaleBand(xDomain, xRange).paddingInner(yPadding);
     const yScale = d3.scaleLinear(yDomain, yRange);
+    this._xScale = d3.scaleTime([new Date(xDomain[0]), new Date(xDomain[xDomain.length - 1])], xRange);
 
     const bar = barGroup
       .selectAll('.stack-bar')
       .data(data)
       .join('g')
-        .attr('class', 'stack-bar')
+        .attr('class', (_, i) => `stack-bar-${this._key[i]}`)
         .attr('fill', (_, i) => colors[i])
       .selectAll('.bar-rect')
       .data(d => d)
       .join('rect')
-        .attr('x', (_, i) => {
-          return xScale(xDomain[i])
-        })
+        .attr('x', (_, i) => xScale(xDomain[i]))
         .attr('y', ([y1, y2]) => Math.min(yScale(y1), yScale(y2)))
         .attr('height', ([y1, y2]) => Math.abs(yScale(y1) - yScale(y2)))
-        .attr('width', xScale.bandwidth());
+        .attr('width', xScale.bandwidth())
+        .attr('opacity', 0.2);
+
+    const brush = d3.brushX()
+      .extent([[marginLeft, marginTop], [width - marginRight, height - marginBottom]])
+      .on('start brush', ({selection}) => that.#brushing(selection, bar, xScale))
+      .on('end', ({selection}) => that.#brushEnd(selection, xDomain, xScale));
+
+    barGroup.append('g')
+      .attr('class', 'trend-brush')
+      .call(brush)
+      // .call(brush.move, [3, 5].map(x))
+  }
+
+  #brushing(selection, eles, xScale) {
+    if (selection === null) {
+      eles.attr('opacity', 0.2);
+    } else {
+      const computedOpacity = d => {
+        let newX = xScale(d.data.endTimeOutput);
+        return newX >= selection[0] && newX < selection[1];
+      }
+      eles.attr('opacity', d => computedOpacity(d) ? 1 : 0.2);
+    }
+    
+    let brushGroup = this._container.select('.trend-brush');
+    brushGroup.call(g => this.#brushHandle.call(this, g, selection));
+  }
+
+  #brushEnd(selection, xDomain, xScale) {
+    if (selection === null) return;
+    const brushRange = d3.filter(xDomain, d => {
+      let x = xScale(d);
+      return selection[0] <= x && x <= selection[1];
+    })
+    let newState = [brushRange[0], brushRange.slice(-1)[0]];
+    store.dispatch(SET_BRUSH_DATE, newState);  // 派发修改state: 刷选的时间
+  }
+
+  #brushHandle (g, selection) {
+    g.selectAll(".handle--custom")
+      .data([{type: "w"}, {type: "e"}])
+      .join(
+        enter => {
+          enter.append("path")
+            .attr("class", "handle--custom")
+            .attr("fill", "#666")
+            .attr("cursor", "ew-resize")
+            .attr("d", (_, i) => Boundary.brush({
+              width: 10,
+              height: this._viewHeight - this._margin.top - this._margin.bottom,
+              direction: i === 0 ? 'left' : 'right' 
+            }))
+        }
+      )
+      .attr("display", selection === null ? "none" : null)
+      .attr("transform", selection === null ? null : (d, i) => `translate(${selection[i]},${this._margin.top})`)
   }
 }

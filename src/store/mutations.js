@@ -1,5 +1,8 @@
 import { convertTime } from "@/utils";
-import { SET_MONTH_PICKER } from "./actionTypes";
+import { 
+  SET_MONTH_PICKER,
+  SET_BRUSH_DATE,
+} from "./actionTypes";
 
 export default {
   [SET_MONTH_PICKER](state, startDate) {
@@ -14,4 +17,8 @@ export default {
 
     state.monthPickDate = [startDate, convertTime(endDate)];
   },
+  [SET_BRUSH_DATE](state, newDateArr) {
+    state.brushDate = newDateArr;
+    console.log('brushDate修改成功: ', state.brushDate);
+  }
 }
