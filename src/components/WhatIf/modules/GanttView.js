@@ -1,6 +1,10 @@
 import * as d3 from 'd3';
-import { SuperGroupView } from '@/utils/renderClass';
-import { labelColor, labelColorMap } from '@/utils/setting';
+import {
+  SuperGroupView,
+  labelColor,
+  labelColorMap,
+  getColor,
+} from '@/utils';
 import { Boundary } from './Boundary';
 import InfoView from './InfoView';
 import {
@@ -46,11 +50,6 @@ export default class GanttView extends SuperGroupView {
     });
     let xRange = [this._margin.left, this._viewWidth - this._margin.right];
     this._xScale = d3.scaleTime(xDomain, xRange);
-    this._color = d => {
-      let a = [d.bad_flag, d.good_flag, d.no_flag]; // 数量统计
-      let max = Math.max(...a);
-      return labelColor[a.indexOf(max)];
-    }
     return this;
   }
 
@@ -100,7 +99,7 @@ export default class GanttView extends SuperGroupView {
           .attr('x', d => xScale(new Date(d.startTime)))
           .attr('width', d => this.#width(d, xScale))
           .attr('height', 30)
-          .attr('fill', this._color)
+          .attr('fill', d => getColor(d.good_flag, d.bad_flag, d.no_flag))
       )
     group.selectAll('.no-merge-block')
       .data(d => d.category.filter(e => !e.merge_flag))
@@ -172,11 +171,22 @@ export default class GanttView extends SuperGroupView {
 
   #batchInfoRender(newX, data, instanceMap) {
     const that = this;
-    const idList = data.keys();
+    const idList = Array.from(data.keys());
     const infoW = 50;
     const infoH = 50;
-    const computedOffset = d => 200 + data.get(d).count * (infoW + 20);
-    const computedTrans = d => `translate(${[computedOffset(d), 150]})`;
+    const infoSpace = 20;
+
+    let prevPos = undefined, offsetMap = new Map();  // 计算offset并保存
+    for (let id of idList) {
+      let val = data.get(id);
+      let curPos = newX(new Date(val.startTime)) + val.count * (infoW + infoSpace);
+      curPos = prevPos && prevPos + (infoW + infoSpace) > curPos ? prevPos + (infoW + infoSpace) : curPos;
+      offsetMap.set(id, curPos);
+      prevPos = curPos;
+    }
+
+    const computedTrans = id => `translate(${[offsetMap.get(id), 150]})`;
+    const display = id => offsetMap.get(id) > this._viewWidth ? 'none' : '';
     const t = this._container.transition().duration(100);
 
     this._container.selectAll('.info-root')
@@ -186,23 +196,26 @@ export default class GanttView extends SuperGroupView {
     function enterHandle(enter) {
       enter.append('g')
         .attr('class', 'info-root')
+        .attr('transform', d => `translate(${[0, 150]})`)
+        .attr('display', display)
         .attr('custom--handle', function (id) {
-          const offset = computedOffset(id);
+          const offset = offsetMap.get(id);
           const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, id);
           instanceMap.set(id, instance);
           instance.joinData(data.get(id)).initState(newX, offset).render();
         })
-        .attr('transform', d => `translate(${[0, 150]})`)
       .call(enter => enter.transition(t)
         .attr('transform', computedTrans))
     }
     function updateHandle(update) {
-      update.attr('custom--handle', id => {
-        const offset = computedOffset(id);
-        instanceMap.get(id).initState(newX, offset).update();
-      })
-      .call(g => g.transition(t)
-        .attr('transform', computedTrans))
+      update
+        .attr('display', display)
+        .attr('custom--handle', id => {
+          const offset = offsetMap.get(id);
+          instanceMap.get(id).initState(newX, offset).update();
+        })
+        .call(g => g.transition(t)
+          .attr('transform', computedTrans))
     }
     function exitHandle(exit) {
       exit.attr('custom--handle', id => {

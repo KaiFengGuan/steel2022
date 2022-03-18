@@ -1,3 +1,5 @@
+import { labelColor } from '@/utils/setting';
+
 export function objClean (obj) {
   for (let item in obj) {
       if ((obj[item] === '') || (obj[item] === undefined) || (obj[item] === null)) {
@@ -62,6 +64,15 @@ export function convertTime (value) {
 export function convertFloat (f, n) {
   let p = Math.pow(10, n)
   return Math.round(f * p) / p
+}
+
+/**
+ * 给定good，bad，noflag三类标签的数量，返回要显示的颜色
+ */
+export function getColor(good, bad, no) {
+  let a = [bad, good, no]; // 数量统计
+  let max = Math.max(...a);
+  return labelColor[a.indexOf(max)];
 }
 
 export * from './element';

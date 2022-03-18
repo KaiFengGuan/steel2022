@@ -14,13 +14,13 @@
 <script>
 import { defineComponent } from "vue-demi";
 
-import OverviewMain from './OverviewMain.vue';
+import ComparativeMain from './ComparativeMain.vue';
 import { scattorData, ALGORITHM_OPTION } from '@/api/overview';
 
 export default defineComponent({
   name: 'WhatIf',
   components: {
-    OverviewMain,
+    ComparativeMain,
   },
   setup () {
     // 这个请求体需要抽到vuex中

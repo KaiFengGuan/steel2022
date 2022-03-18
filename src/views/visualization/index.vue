@@ -20,7 +20,7 @@ import { defineComponent } from "@vue/runtime-core";
 import SystemTitle from '@/components/SystemTitle/index.vue';
 import DatePicker from '@/components/DatePicker/index.vue';
 import WhatIf from '@/components/WhatIf/index.vue';
-import Overview from '@/components/Overview/index.vue';
+import ComparativeView from '@/components/ComparativeView/index.vue';
 import ControlPanel from '@/components/ControlPanel/index.vue';
 
 export default defineComponent({
@@ -29,7 +29,7 @@ export default defineComponent({
     SystemTitle,
     DatePicker,
     WhatIf,
-    Overview,
+    ComparativeView,
     ControlPanel,
   },
   setup () {

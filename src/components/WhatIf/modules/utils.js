@@ -3,6 +3,7 @@
  * 一些 数据处理逻辑 函数
  */
 import * as d3 from 'd3';
+import { getColor } from '@/utils';
 
 /**
  * Calculate what the transform should be to achieve the mocked scale
@@ -50,11 +51,13 @@ export function getBatchDisplayInfoData(newX, data) {
   
   const len = disData.length;
   if (len <= 0) return newDisData;
-  let count = 0;
+  let prevId = undefined;
   for (let i = 0; i < len; i++) {
+    let count = 0;
     const batIdx = disData[i].batch;
-    let merge = disData[i].category.filter(d => d.merge_flag);
-    let noMerge = disData[i].category.filter(d => !d.merge_flag);
+    const startTime = disData[i].startTime;
+    const merge = disData[i].category.filter(d => d.merge_flag);
+    const noMerge = disData[i].category.filter(d => !d.merge_flag);
 
     let groups = d3.groups(merge, d => d.platetype);
     for (let [cate, dat] of groups) {
@@ -63,23 +66,37 @@ export function getBatchDisplayInfoData(newX, data) {
       newDisData.set(ID, {
         batch: batIdx,
         id: ID,
+        prevId: prevId,
         count: count++,
         category: cate,
-        link: dat.map(d => [d.startTime, d.endTime]),
+        startTime: startTime,
+        link: dat.map(linkInfo),
       });
+      prevId = ID;
     }
     // console.log('noMerge: ', noMerge);
-    noMerge.sort((a, b) => b.total - a.total);
-    newDisData.set(`${batIdx}-${'noMerge'}`, {
-      batch: batIdx,
-      id: `${batIdx}-${'noMerge'}`,
-      count: count++,
-      category: Array.from(new Set(noMerge.map(d => d.platetype))),
-      link: noMerge.map(d => [d.startTime, d.endTime]),
-    });
+    if (noMerge.length) {
+      noMerge.sort((a, b) => b.total - a.total);
+      newDisData.set(`${batIdx}-${'noMerge'}`, {
+        batch: batIdx,
+        id: `${batIdx}-${'noMerge'}`,
+        prevId: prevId,
+        count: count++,
+        category: Array.from(new Set(noMerge.map(d => d.platetype))),
+        startTime: startTime,
+        link: noMerge.map(linkInfo),
+      });
+    }
   }
   
   return newDisData;
+}
+// 计算连接线的数据, getBatchDisplayInfoData内调用
+function linkInfo(data, index) {
+  return {
+    date: [data.startTime, data.endTime],
+    color: getColor(data.good_flag, data.bad_flag, data.no_flag),
+  }
 }
 
 /**

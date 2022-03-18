@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
-import { SuperGroupView } from "@/utils/renderClass";
-import { labelColorMap } from '@/utils/setting';
+import {
+  SuperGroupView,
+  labelColorMap,
+} from '@/utils';
 
 export default class InfoView extends SuperGroupView {
   constructor({
@@ -60,7 +62,7 @@ export default class InfoView extends SuperGroupView {
     const sX = this._viewWidth / 2;
     const sY = 0;
     const tX = (this._xScale(new Date(d[0])) + this._xScale(new Date(d[1]))) / 2 - this._offset;
-    const tY = -50;
+    const tY = -70;
 
     return d3.linkVertical()({ source: [sX, sY], target: [tX, tY] });
   }
@@ -74,14 +76,14 @@ export default class InfoView extends SuperGroupView {
       .join(enter => enter.append('path')
         .attr('class', 'link-to-block')
         .attr('fill', 'none')
-        .attr('stroke', 'red')
-        .attr('stroke-width', 1)
-        .attr('d', d => this.#linkPath(d))
+        .attr('stroke', d => d.color)
+        .attr('stroke-width', 1.5)
+        .attr('d', d => this.#linkPath(d.date))
       );
   }
 
   #updateLink() {
     this._container.selectAll('.link-to-block')
-      .attr('d', d => this.#linkPath(d))
+      .attr('d', d => this.#linkPath(d.date))
   }
 }
