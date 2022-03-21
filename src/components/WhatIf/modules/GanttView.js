@@ -10,6 +10,7 @@ import InfoView from './InfoView';
 import {
   getTransformFromXScales,
   getBatchDisplayInfoData,
+  allInfoData,
   comeFromRight,
 } from './utils';
 
@@ -26,6 +27,9 @@ export default class GanttView extends SuperGroupView {
     this._key = ['bad_flag', 'good_flag', 'no_flag'];
     this._tooltip = tooltipIns;
     this._margin = { top: 50, bottom: 10, left: 10, right: 10 };
+    this._rawData = undefined;    // 原始数据
+    this._infoData = undefined;   // 全部批次的规格绘图数据
+    this._infoExtent = undefined; // 规格范围
     this._xScale = null;
     this._displayScale = null;
 
@@ -33,6 +37,7 @@ export default class GanttView extends SuperGroupView {
     this._batchDisplayDat = new Map();  // 储存需要显示的数据
 
     this._instanceKey = [];
+    this._ganttHeight = 30;
   }
 
   // 添加原始数据，并转换为绘图数据
@@ -43,6 +48,10 @@ export default class GanttView extends SuperGroupView {
       let tb = new Date(b.startTime).getTime();
       return ta - tb;
     });
+    let result = allInfoData(this._rawData);
+    this._infoData = result.data;
+    this._infoExtent = result.extent;
+    // console.log(this._infoData)
 
     let len = this._rawData.length;
     let xDomain = d3.extent(this._rawData, (d, i) => {
@@ -112,7 +121,7 @@ export default class GanttView extends SuperGroupView {
           .attr('class', 'no-merge-rect')
           .attr('x', d => xScale(new Date(d.toc)))
           .attr('width', 1)
-          .attr('height', 30)
+          .attr('height', this._ganttHeight)
           .attr('fill', d => labelColorMap[d.flag_lable])
       )
   }
@@ -154,7 +163,7 @@ export default class GanttView extends SuperGroupView {
     this.#updateOtherInstance();
 
     // 过滤计算得到显示的规格数据
-    const displayData = getBatchDisplayInfoData(xz, this._rawData);
+    const displayData = getBatchDisplayInfoData(xz, this._infoData);
     this.#batchInfoRender(xz, displayData, this._batchDisplayMap);
   }
 
@@ -172,8 +181,9 @@ export default class GanttView extends SuperGroupView {
   #batchInfoRender(newX, data, instanceMap) {
     const that = this;
     const idList = Array.from(data.keys());
-    const infoW = 50;
-    const infoH = 50;
+    const transY = 150;  // 规格信息group起始高度
+    const infoW = 100;
+    const infoH = 100;
     const infoSpace = 20;
 
     let prevPos = undefined, offsetMap = new Map();  // 计算offset并保存
@@ -185,7 +195,7 @@ export default class GanttView extends SuperGroupView {
       prevPos = curPos;
     }
 
-    const computedTrans = id => `translate(${[offsetMap.get(id), 150]})`;
+    const computedTrans = id => `translate(${[offsetMap.get(id), transY]})`;
     const display = id => offsetMap.get(id) > this._viewWidth ? 'none' : '';
     const t = this._container.transition().duration(100);
 
@@ -196,13 +206,15 @@ export default class GanttView extends SuperGroupView {
     function enterHandle(enter) {
       enter.append('g')
         .attr('class', 'info-root')
-        .attr('transform', d => `translate(${[0, 150]})`)
+        .attr('transform', d => `translate(${[0, transY]})`)
         .attr('display', display)
         .attr('custom--handle', function (id) {
           const offset = offsetMap.get(id);
           const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, id);
           instanceMap.set(id, instance);
-          instance.joinData(data.get(id)).initState(newX, offset).render();
+          instance.joinData(data.get(id), that._infoExtent)
+            .initState(newX, offset)
+            .render();
         })
       .call(enter => enter.transition(t)
         .attr('transform', computedTrans))
@@ -212,7 +224,7 @@ export default class GanttView extends SuperGroupView {
         .attr('display', display)
         .attr('custom--handle', id => {
           const offset = offsetMap.get(id);
-          instanceMap.get(id).initState(newX, offset).update();
+          instanceMap.get(id).update(newX, offset);
         })
         .call(g => g.transition(t)
           .attr('transform', computedTrans))
