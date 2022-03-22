@@ -2,58 +2,37 @@
   <el-card class="box-card">
     <template #header>
       <div class="card-header">
-        <span>OverView</span>
+        <span>ComparativeView</span>
       </div>
     </template>
-    <div class="overview">
-      <overview-main></overview-main>
-    </div>
+    <ComparativeMain
+      class="comparative-view"
+      :comparativeData="comparativeData"
+    />
   </el-card>
 </template>
 
-<script>
-import { defineComponent } from "vue-demi";
-
+<script setup>
+import { onMounted, reactive } from "vue-demi";
 import ComparativeMain from './ComparativeMain.vue';
-import { scattorData, ALGORITHM_OPTION } from '@/api/overview';
 
-export default defineComponent({
-  name: 'WhatIf',
-  components: {
-    ComparativeMain,
-  },
-  setup () {
-    // 这个请求体需要抽到vuex中
-    const req_body = {
-      slabthickness: [],
-      tgtdischargetemp: [],
-      tgtplatethickness: [],
-      tgtwidth: [],
-      tgtplatelength2: [],
-      tgttmplatetemp: [],
-      cooling_start_temp: [],
-      cooling_stop_temp: [],
-      cooling_rate1: [],
-      productcategory: [],
-      steelspec: [],
-      status_cooling: 0
-    };
+// 离线数据
+import comparativeDataMock from '@/data/comparativeData.json';
 
-    // let p = scattorData(ALGORITHM_OPTION.T_SNE, '2021-02-10%2000:00:00', '2021-02-13%2000:00:00', req_body);
 
-    // p.then((req) => {
-    //   console.log(req);
-    // }).catch((e) => {
-    //   console.log(e);
-    // })
+let comparativeData = reactive({ value: {} });
+onMounted(() => {
+  // 模拟promise获取数据
+  setTimeout(() => {
+    comparativeData.value = comparativeDataMock;
+  }, 2000);
+})
 
-  }
-});
 </script>
 
 <style>
 @import url('@/assets/style/MyCard.scss');
-.overview {
+.comparative-view {
   height: 480px;
 }
 </style>

@@ -8,7 +8,7 @@ import { onMounted, reactive, ref, toRaw, watch, watchEffect } from "vue-demi";
 // import { getDiagnosisData } from "@/api/diagnosis";
 // import temporalData from '@/data/temporalData.json'
 import batchData from '@/data/batchData.json'
-console.log(batchData)
+// console.log(batchData)
 
 const props = defineProps(['plateStati', 'gantData']);
 
@@ -44,7 +44,7 @@ setTimeout(()=>{
   time.value = 1
 })
 watch(time, () => {
-  console.log(batchData)
+  // console.log(batchData)
   renderInstance.render(TEMPORAL, batchData);
 });
 // console.log(modulesFiles)

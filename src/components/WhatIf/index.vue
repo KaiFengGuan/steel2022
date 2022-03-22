@@ -19,7 +19,7 @@ import { useStore } from "vuex";
 
 import { HEIGHT } from './size';
 import WhatIfMain from './WhatIfMain.vue';
-import { getPlatesStatistics, getGantData } from '@/api/overview';
+import { getPlatesStatistics, getGantData } from '@/api/monitor';
 
 // 离线数据
 import platesStatistics from '@/data/platesStatistics.json';

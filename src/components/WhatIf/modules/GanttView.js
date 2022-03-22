@@ -196,7 +196,7 @@ export default class GanttView extends SuperGroupView {
     }
 
     const computedTrans = id => `translate(${[offsetMap.get(id), transY]})`;
-    const display = id => offsetMap.get(id) > this._viewWidth ? 'none' : '';
+    const display = id => offsetMap.get(id) > this._viewWidth - infoW ? 'none' : '';
     const t = this._container.transition().duration(100);
 
     this._container.selectAll('.info-root')

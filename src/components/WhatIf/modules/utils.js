@@ -131,7 +131,7 @@ function getInfoTargetData(plates, extent) {
  * @returns 
  */
 export function getBatchDisplayInfoData(newX, data) {
-  const filterHandle = (d, range) => new Date(d.startTime) > range[0] && new Date(d.endTime) < range[1];
+  const filterHandle = (d, range) => new Date(d.startTime) >= range[0] && new Date(d.endTime) <= range[1];
   const disData = data.filter(d => filterHandle(d, newX.domain()));
   const newDisData = new Map();
   

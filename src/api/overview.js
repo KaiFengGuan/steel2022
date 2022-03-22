@@ -21,20 +21,6 @@ ALGORITHM_SELECT[ALGORITHM_OPTION.UMAP_Cate] = 'CateVisualizationUMAP';
 ALGORITHM_SELECT[ALGORITHM_OPTION.ISOMAP_Cate] = 'CateVisualizationISOMAP';
 ALGORITHM_SELECT[ALGORITHM_OPTION.PCA_Cate] = 'CateVisualizationPCA';
 
-export function getPlatesStatistics (interval, dateStart, dateEnd) {
-  return request({
-    url: `/v2.0/PlateYieldStaisticsApi/${interval}/${dateStart}/${dateEnd}/`,
-    method: 'get'
-  })
-}
-
-export function getGantData (dateStart, dateEnd) {
-  return request({
-    url: `/v2.0/GanttChartApi/${dateStart}/${dateEnd}/`,
-    method: 'get'
-  })
-}
-
 export function scattorData (algOpt, dateStart, dateEnd, data) {
   let algorithm = ALGORITHM_SELECT[algOpt];
 

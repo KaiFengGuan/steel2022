@@ -33,8 +33,6 @@ export default class InfoView extends SuperGroupView {
   joinData(value, extent) {
     this._rawData = value;
     this._extent = extent;
-    console.log('批次规格数据: ', this._rawData)
-    console.log('批次范围: ', this._extent)
     return this;
   }
 

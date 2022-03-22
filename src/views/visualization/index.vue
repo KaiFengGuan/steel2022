@@ -9,7 +9,7 @@
       <what-if class="what-if-content"></what-if>
     </el-col>
     <el-col :span="4">
-      <overview></overview>
+      <comparative-view></comparative-view>
     </el-col>
   </el-row>
 </template>
