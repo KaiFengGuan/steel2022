@@ -25,7 +25,7 @@ onMounted(() => {
   // 模拟promise获取数据
   setTimeout(() => {
     comparativeData.value = comparativeDataMock;
-  }, 2000);
+  }, 500);
 })
 
 </script>
