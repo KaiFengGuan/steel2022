@@ -1,5 +1,9 @@
 import * as d3 from 'd3';
 
+/**
+ * ProcessView: 计算母工序子工序边界
+ * @returns 
+ */
 export function computeAngle() {
   const PI = Math.PI;
   const prStart = -PI / 6;
@@ -39,5 +43,37 @@ export function computeAngle() {
     })
   }
   
+  return res;
+}
+
+/**
+ * ProcessView: 计算母工序子工序每一段填充的角度
+ * @param {Array} data      要处理的数据
+ * @param {Object} extend   数据的最大值
+ * @param {Array} angle    角度边界范围
+ */
+export function computeArcFillAngle(data, extend, angle) {
+  const res = { stage: [], sub: [] };
+  const stage = [data.production_rhythm, ...data.total_mean];
+  const sub = [data.heating_mean, data.rolling_mean, data.cooling_mean];
+  const map = ['heating_max', 'rolling_max', 'cooling__max'];
+  stage.forEach((d, i) => {
+    const span = angle[i].stage_end - angle[i].stage_start;
+    const start = angle[i].stage_start;
+    const end = start + (d / extend.total_max[i]) * span;
+    res.stage.push([start, end]);
+  });
+  sub.forEach((item, idx) => {
+    const _sub = [];
+    const extArr = angle[idx + 1].stage_sub;
+    item.forEach((d, i) => {
+      const span = extArr[i][1] - extArr[i][0];
+      const start = extArr[i][0];
+      const end = start + (d / extend[map[idx]][i]) * span;
+      _sub.push([start, end]);
+    })
+    res.sub.push(_sub);
+  });
+
   return res;
 }

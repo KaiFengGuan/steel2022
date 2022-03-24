@@ -42,7 +42,7 @@ export class ComparativeView extends SuperSVGView {
       .join(
         enter => enter.append('g')
           .attr('class', 'seriesGroup')
-          .attr('transform', (d, i) => `translate(${[0, i * 120]})`)
+          .attr('transform', (d, i) => `translate(${[0, i * 90]})`)
       )
 
     this.#renderSeries(seriesGroup);
@@ -52,8 +52,8 @@ export class ComparativeView extends SuperSVGView {
 
   #renderSeries(group) {
     const that = this;
-    const width = 100;
-    const gap = 20;
+    const width = 80;
+    const gap = 10;
 
     group.selectAll('.content')
       .data(d => d)
@@ -67,5 +67,15 @@ export class ComparativeView extends SuperSVGView {
               .render();
           })
       )
+    
+    group.selectAll('.series-line')
+      .data(d => new Array(d.length).fill(0))
+      .join('path')
+      .attr('d', (d, i) => d3.line()([
+        [width * (i + 1) + gap * i - 4, width / 2],
+        [width * (i + 1) + gap * i + 4 + gap, width / 2],
+      ]))
+      .attr('stroke', '#ccc')
+      .attr('stroke-width', 2)
   }
 }
