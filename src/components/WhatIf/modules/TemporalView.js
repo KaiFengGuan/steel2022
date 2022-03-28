@@ -13,11 +13,11 @@ import { SuperGroupView,
   mergeColor,
   updateChildrenNodes,
   zoomIcon,
-  createIcon,
-  getID
+  createIcon
 } from "@/utils";
 
-// console.log(sampleData)
+import { barView, riverView } from "./barView";
+
 export default class TemporalView extends SuperGroupView {
   constructor({
     width,
@@ -91,9 +91,12 @@ export default class TemporalView extends SuperGroupView {
         order: +item,
         y: this._viewHeight,//0
         yScale: null,
-        pattern: "temporal"
+        pattern: "river"
       }
     }
+
+    this._barInstances = {};
+    this._riverInstances = {};
 
     // console.log(this._labelDetails);
     this.#initSetting();
@@ -173,8 +176,6 @@ export default class TemporalView extends SuperGroupView {
     })
     this._currentKeys = arr;
 
-    // console.log(this._currentKeys)
-
     this._currentKeys.forEach(d => {
       let arr = Object.values(this._upidDetails).map(e => e.dimens[d]);
       LD[d].yScale = d3.scaleLinear().range([0, this._mergeHeight])
@@ -182,10 +183,17 @@ export default class TemporalView extends SuperGroupView {
         [d3.min([arr.map(d => d.value), arr.map(d => d.extremum_l)].flat()) * 0.95,
           d3.max([arr.map(d => d.value), arr.map(d => d.extremum_u)].flat()) * 1.05])
         // d3.extent([arr.map(d => d.value), arr.map(d => d.extremum_l), arr.map(d => d.extremum_u)].flat()))
+      if(this._riverInstances[d] === undefined){
+        this._riverInstances[d] = {}
+      }
+    });
+    Object.keys(this._riverInstances).forEach(d => {
+      if(this._currentKeys.indexOf(d) === -1){
+        delete this._riverInstances[d];
+      }
     })
-    // console.log(keys,keys.map(d => this._labelName[d]))
-    // console.log(keys,keys.map(d => this._labelName[d]), 
-    // keys.map(d => this._labelDetails[this._labelName[d]]), arr, this._labelDetails);
+    
+    // console.log(keys,keys.map(d => this._labelName[d]))// keys.map(d => this._labelDetails[this._labelName[d]]), arr, this._labelDetails);
   }
 
   #getBatchParams(){
@@ -196,20 +204,25 @@ export default class TemporalView extends SuperGroupView {
     let rangeArray = d3.pairs(range);
     rangeArray.forEach((d, i) => {
       let singleData = this._batchDetails[keys[i]];
-      singleData.oldXRange = singleData.xRange
+      singleData.oldXRange = singleData.xRange;
       singleData.xRange = d;
+      singleData.width = d[1] - d[0];
       singleData.xScale = this._isDiscrete 
         ? d3.scaleBand().range(d.map(e => e - d[0])).domain(singleData.discreteDomain)
         .paddingInner(0).paddingOuter(0).align(0.5)
-        : d3.scaleLinear().range(d.map(e => e - d[0])).domain(singleData.timeDomain)})
+        : d3.scaleLinear().range(d.map(e => e - d[0])).domain(singleData.timeDomain);
+      singleData.xAccessor = this._isDiscrete ? e => e.upid : e => new Date(e.toc);
+      singleData.step = this._isDiscrete ? singleData.xScale.step() : 0;
+      })
   }
 
   render() {
-    this._container.selectAll("g").remove();  // 先清空container
+    this._container.selectAll("*").remove();  // 先清空container
 
     this.#renderGroup();
     this.#renderDefsG();
-    this.reRender();
+    this.reflow();
+    this.#renderSingleRow();
 
     return this;
   }
@@ -219,8 +232,6 @@ export default class TemporalView extends SuperGroupView {
     this.#renderSingleRow();
     d3.selectAll(".labelGroup").nodes().map(d => this.#joinBatchElement(d3.select(d)));
     // this._currentKeys
-    // // updateChildrenNodes(this, this._container.selectAll(".labelGroup"), this.#joinBatchElement)
-    // this._container.selectAll(".labelGroup").nodes().map(d => this.#joinBatchElement(d3.select(d)))
   }
 
   #renderGroup(){
@@ -388,7 +399,6 @@ export default class TemporalView extends SuperGroupView {
       filter: "url(#batch-shadow)"
     }
   } = {}){
-    
     // const t = d3.transition().duration(750);
     this._cardGroup.selectAll(".labelGroup").data(this._currentKeys, d => d)
       .join(
@@ -417,10 +427,9 @@ export default class TemporalView extends SuperGroupView {
           .transition().duration(250).ease(d3.easeLinear)
           .attr("transform", function(){return d3.select(this).attr("newY")});
         [zoom, pin].map(func);
-        // d3.selectAll(".labelGroup")
-        //   // .transition().duration(250).ease(d3.easeLinear)
-        //   .attr("opacity", f => d !== f ? 0.6 : 1)
-        console.log("mouseenter", d)
+        this._initMouseEvent({
+          'label': d
+        })
       })
       .on("mouseleave", (e, d) => {
         let group = d3.select(e.target),
@@ -431,10 +440,9 @@ export default class TemporalView extends SuperGroupView {
           .attr("transform", function(){return d3.select(this).attr("oldY")})
           .transition().attr("visibility", "hidden");
         [zoom, pin].map(func);
-        // d3.selectAll(".labelGroup")
-        //   // .transition().duration(250).ease(d3.easeLinear)
-        //   .attr("opacity", 1)
-        console.log("mouseleave", d)
+        this._removeMouseEvent({
+          label: d
+        })
       })
   }
 
@@ -450,76 +458,16 @@ export default class TemporalView extends SuperGroupView {
         - context._cardMargin.top - context._cardMargin.bottom},
       class: "renderBox",
       label: function(){return context._labelDetails[getParentData(this, 2)].height},
-      width: d => this._batchDetails[d].xRange[1] - this._batchDetails[d].xRange[0],
+      width: d => this._batchDetails[d].width,
       stroke: this._borderStyle.color,
       "stroke-width": 0.01,
       fill: "white",
       rx: this._borderStyle.rx,
       ry: this._borderStyle.ry,
       filter: "url(#batch-shadow)"
-    },
-    areaAttrs = {
-      d: function(d){
-        let label = getParentData(this, 2), batch = d;
-        return d3.area().x(e => context._batchDetails[batch].xScale(context._isDiscrete ? e.upid : new Date(e.toc)))
-        .y0(e => context._labelDetails[label].yScale(e.l))
-        .y1(e => context._labelDetails[label].yScale(e.u))
-        (context._batchDetails[batch].upid.map(e => context._upidDetails[e].dimens[label]))
-      },
-      class: "mergeArea",
-      opacity: 0.5,
-      fill: "#B9C6CD"
-    },
-    lineAttrs = {
-      // transform: translate(this._mergeMargin.left, this._mergeMargin.top),
-      class: "mergeLine",
-      stroke: "#B9C6CD",
-      "stroke-width": 1,
-      fill: "none",
-      d: function(d){
-        let label = getParentData(this, 2), batch = d;
-        return d3.line()
-          .y(e => context._labelDetails[label].yScale(e.value))
-          .x(e => context._batchDetails[batch].xScale(context._isDiscrete ? e.upid : new Date(e.toc)))
-          .curve(d3.curveLinear)
-          (context._batchDetails[batch].upid.map(e => context._upidDetails[e].dimens[label]))
-      }
-    },
-    circleAttrs = {
-      class: "mergeCircle",
-      r: 1.5,
-      "fill": "white",
-      id: d => `badSteel_${d.upid}`,
-      "stroke-width": 1,
-      "stroke": "#e3ad92",
-      transform: function(d){
-        let label = d.name, batch = getParentData(this, 1);
-        return translate([context._batchDetails[batch].xScale(context._isDiscrete ? d.upid : new Date(d.toc)), 
-          context._labelDetails[label].yScale(d.value)])
-      }
     }
   } = {}){
     const key = group.data();
-    function generateFunc(pattern){
-      switch (pattern) 
-      { 
-        case "river":
-          d3.select(this)
-          .call(tar => createElement(tar, "path", lineAttrs))
-          .call(tar => createElement(tar, "path", areaAttrs))
-          .call(tar => tar.selectAll(".mergeCircle").data(function(d){
-            let label = getParentData(this, 1), batch = d;
-            let arr = context._batchDetails[batch].upid
-              .map(e => context._upidDetails[e].dimens[label])
-              .filter(d => d.extremum_l > d.value || d.extremum_u < d.value);//console.log(label, batch, arr);
-            return arr;
-          }).join("circle").call(g => updateElement(g, circleAttrs))); 
-        break; 
-        case "temporal":
-          ; 
-        break; 
-      }
-    }
     group.selectAll(`.label_${key}`).data(this._batchName, d => d)
     .join(
       enter => enter.append("g")
@@ -527,38 +475,35 @@ export default class TemporalView extends SuperGroupView {
         .call(updateGroupFunc)
         .call(enter => enter.transition().duration(500).ease(d3.easeLinear).call(updateGroupFunc))
         .call(tar => createElement(tar, "rect", cardAttrs))
-        .attr("label", function(){
+        .each(function(d){
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
-            pattern = context._labelDetails[label].pattern;
-          generateFunc.call(this, pattern);
+            batch = d;
+          context._riverInstances[label][batch] = new riverView({
+            container: d3.select(this),
+            xIndex: batch,
+            yIndex: label,
+            yScale: context._labelDetails[label].yScale,
+            xScale: context._batchDetails[batch].xScale,
+            xAccessor: context._batchDetails[batch].xAccessor,
+            yAccessor: e => e.value,
+            step: context._batchDetails[batch].step,
+            lineDatum: context._batchDetails[batch].upid.map(e => context._upidDetails[e].dimens[label]),
+            filterFunc: d => d.l > d.value || d.u < d.value, //d.extremum_l > d.value || d.extremum_u < d.value
+            pattern: context._labelDetails[label].pattern
+          }).render();
         }),
       update => update.transition().duration(500).ease(d3.easeLinear)
         .call(updateGroupFunc)
         .call(tar => updateElement(tar.selectAll(".renderBox"), cardAttrs))
-        .attr("label", function(){
+        .each(function(d){
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
-            pattern = context._labelDetails[label].pattern;
-          switch (pattern) 
-          { 
-            case "river":
-              if(d3.select(this).selectAll(".mergeLine").data().length === 0){
-                generateFunc.call(this, "river")
-              }else{
-                d3.select(this).transition().duration(500).ease(d3.easeLinear)
-                .call(tar => updateElement(tar.selectAll(".mergeLine"), lineAttrs))
-                .call(tar => updateElement(tar.selectAll(".mergeArea"), areaAttrs))
-                .call(tar => updateElement(tar.selectAll(".mergeCircle"), circleAttrs));
-              }
-            break; 
-            case "temporal":
-              if(d3.select(this).selectAll(".mergeLine").data().length === 0){
-                
-              }else{
-                [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  d3.select(this).selectAll(d).remove());
-                generateFunc.call(this, "temporal")
-              }; 
-            break; 
-          }
+            batch = d;
+          context._riverInstances[label][batch].updateRiver({
+            xScale: context._batchDetails[batch].xScale,
+            xAccessor: context._batchDetails[batch].xAccessor,
+            step: context._batchDetails[batch].step,
+            pattern: context._labelDetails[label].pattern
+          })
         })
         ,
       exit => exit
@@ -566,11 +511,24 @@ export default class TemporalView extends SuperGroupView {
         //   .call(updateGroupFunc)
         .remove()
         )
-        .on("click", (e, d) => {
-          console.log(d)
-          console.log("click", e, e.target, d3.pointer(e))
-        })
-        // .transition().duration(500).ease(d3.easeLinear).call(updateGroupFunc)
+    .on("click", (e, d) => {
+      console.log(d)
+      console.log("click", e, e.target, d3.pointer(e))
+    })
+    .on("mouseenter", (e, d) => {
+      this._initMouseEvent({
+        'batch': d
+      })
+    })
+    .on("mouseleave", (e, d) => {
+      this._removeMouseEvent({
+        'batch': d
+      })
+    })
+    // .on('mousemove', (e, d) => {
+    //   let x = d3.pointer(e)[0];
+    //   console.log('mousemove', x, this._batchDetails[d]);
+    // })
   }
 
   #joinBarElement(group, {
@@ -579,15 +537,11 @@ export default class TemporalView extends SuperGroupView {
       class: "barElement"
     },
     options = {
-      xAccessor : d => (d.x0 + d.x1)/2,
-      yAccessor : d => d.length,
-      // height : 50,
       width: this._barWidth - 10,
-      yType : d3.scaleLinear, // y-scale type
-      // color : "currentColor" // bar fill color
     }
   } = {}){
     let context = this;
+    this._barInstances = {};
     group
     .append("g")
     .call(g => updateElement(g, groupAttrs))
@@ -599,24 +553,42 @@ export default class TemporalView extends SuperGroupView {
           height = context._labelDetails[d].height - context._cardMargin.top - context._cardMargin.bottom,
           bad = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 0).map(e => e.dimens[d].value)),
           good = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 1).map(e => e.dimens[d].value));
-          // ymax = Math.max(d3.max(good, d => d.length), d3.max(bad, d => d.length));
         d3.select(this).call(g => updateElement(g, groupAttrs));
-        new barView(Object.assign({
+      context._barInstances[d] = new barView(Object.assign({
           container: container,
           data: [bad, good],
           status: d3.max(good, d => d.length) > d3.max(bad, d => d.length),//data number Boolen
           xDomain,
           height,
-          // yDomain: [0, ymax],
           color: mergeColor,
           opacity: [0.5, 0.8]
         }, options)).render()
       })
-      // .selectAll(".indexBar").data(d => this)
-    // // console.log(group.data())"temp_uniformity_entry_pre"
-    // console.log(Object.values(this._upidDetails).map(d => d.dimens["temp_uniformity_entry_pre"].value))
-    // console.log(Object.values(this._upidDetails).filter(d => d.fqc_label === 0).map(d => d.dimens["temp_uniformity_entry_pre"].value))
-    // console.log(Object.values(this._upidDetails).filter(d => d.fqc_label === 1).map(d => d.dimens["temp_uniformity_entry_pre"].value))
+    console.log(this._barInstances)
+  }
+
+  _initMouseEvent(options = {
+  }){
+    if(options['label'] !== undefined){
+      this._container.selectAll(".labelGroup")
+        .attr("opacity", f => options['label'] !== f ? 0.6 : 1);
+    }
+    if(options['batch'] !== undefined){
+      this._container.selectAll(".batchElement")
+        .attr("opacity", f => options['batch'] !== f ? 0.2 : 1);
+    }
+  }
+
+  _removeMouseEvent(options = {
+  }){
+    if(options['label'] !== undefined){
+      d3.selectAll(".labelGroup")
+        .attr("opacity", 1);
+    }
+    if(options['batch'] !== undefined){
+      d3.selectAll(".batchElement")
+        .attr("opacity", 1);
+    }
   }
 
   #joinQueryIcon(group, {
@@ -682,8 +654,8 @@ export default class TemporalView extends SuperGroupView {
       .append("path")
       .call(g => updateElement(g, queryAttrs))
     icon.on("click", (e, d) => {
-      // this._labelDetails[d].status = !this._labelDetails[d].status;
-      // this.reflow();
+      this._labelDetails[d].pattern = this._labelDetails[d].pattern === 'river' ? 'temporal' : 'river';
+      this.#joinBatchElement(d3.selectAll(".labelGroup").filter(e => e === d))
     })
   }
 
@@ -720,103 +692,5 @@ export default class TemporalView extends SuperGroupView {
       this._labelDetails[d].pattern = "river";
       this.reRender();
     })
-  }
-}
-
-class barView{
-  constructor(obj){
-    this._options = {
-      data : null,
-      container : null,
-      xAccessor : (d, i) => i, // given d in data, returns the (ordinal) x-value
-      yAccessor : d => d, // given d in data, returns the (quantitative) y-value
-      marginTop : 1, // the top margin, in pixels
-      marginRight : 5, // the right margin, in pixels
-      marginBottom : 0, // the bottom margin, in pixels
-      marginLeft : 5, // the left margin, in pixels
-      width : 200, // the outer width of the chart, in pixels
-      height : 50, // the outer height of the chart, in pixels
-      xRange : () => [this._marginLeft, this._width - this._marginRight], // [left, right]
-      yType : d3.scaleLinear, // y-scale type
-      xDomain : [0, 1], // [xmin, xmax]
-      // yDomain: null, // [ymin, ymax]
-      yRange : () => [this._height - this._marginBottom, this._marginTop], // [bottom, top]
-      color : "currentColor", // river fill color
-      opacity : 1
-    };
-    let options = Object.assign(this._options, obj);
-    for(let item in options){
-      if(typeof options[item] === "function" && options[item].length === 0){
-        this["_" + item] = options[item]();
-      }else{
-        this["_" + item] = options[item];
-      }
-    }
-
-    this._uid = getID();
-    console.log(this._uid)
-    console.log(this);
-    // if(data.length === 1){
-    //   console.log(data)
-    //   // let key = 
-    //   // data.unshift()
-    // }
-  }
-
-  _initScale(){
-     // Compute values.
-    // console.log(data)
-    const X = d3.map(this._data.flat(), this._xAccessor);
-    const Y = d3.map(this._data.flat(), this._yAccessor);
-    // console.log("x, y", X, Y);
-  
-    // Compute default domains, and unique the x-domain.
-    if (this._xDomain === undefined) this._xDomain = d3.extent(X);
-    if (this._yDomain === undefined) this._yDomain = [0, d3.max(Y)];
-    // console.log("xDomain, yDomain", xDomain, yDomain);
-  
-    // Construct scales, axes, and formats.
-    this._xScale = d3.scaleLinear().range(this._xRange).domain(this._xDomain);
-    this._yScale = d3.scaleLinear().range(this._yRange).domain(this._yDomain);
-    // console.log("xScale, yScale", data.map(x).map(d => xScale(d)), data.map(y).map(d => yScale(d)));
-
-    // area function.
-    this._area = d3.area()
-      .x(d => this._xScale(this._xAccessor(d)))
-      .y1(d => this._yScale(this._yAccessor(d)))
-      .y0(this._height - this._marginBottom)
-      .curve(d3.curveMonotoneX);
-  }
-
-  render(){
-    this._initScale();
-    this._container
-      .append("rect")
-      .attr("height", this._height)
-      .attr("width", this._width)
-      .attr("class", "background" + this._uid)
-      .attr("fill", "white")
-      .attr("opacity", 0);
-    this._container.selectAll('path').data([0, 1]).join('path')
-      .attr("class", "riverChart" + this._uid)
-      .attr("fill", d => this._color[d])
-      .attr("opacity", d =>  this._opacity[d])
-      .attr("d", d => this._area(this._data[d]));
-    
-  }
-  reRender(options, t = d3.transition().duration(300)){
-    for(let item in options){
-      this["_" + item] = options[item];
-    }
-    this.initScale()
-    this._container.select(".background" + this._uid)
-      .transition(t)
-      .attr("height", this._height)
-      .attr("width", this._width)
-    this._container.select(".riverChart" + this._uid)
-      .transition(t)
-      .attr("fill", d => this._color[d])
-      .attr("opacity", d =>  this._opacity[d])
-      .attr("d", d => this._area(this._data[d]));
   }
 }

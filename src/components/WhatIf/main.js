@@ -17,9 +17,9 @@ export class WhatIfView extends SuperSVGView {
     this._container.attr('id', 'what-if-view');
     this._tooltipInstance = new TooltipClass({width: 0, height: 0}, ele, 'tooltip-what-if');
     
+    this._temporalView = new TemporalView({ width: width, height: height - TEMPORAL_HEIGHT, moveY: TEMPORAL_HEIGHT }, this._container, this._tooltipInstance, 'temporal-view-root');
     this._trendView = new TrendView({ width: width, height: TREND_HEIGHT, moveY: 0 }, this._container, this._tooltipInstance, 'trend-view-root');
     this._ganttView = new GanttView({ width: width, height: GANTT_HEIGHT, moveY: TREND_HEIGHT }, this._container, this._tooltipInstance, 'gantt-view-root');
-    this._temporalView = new TemporalView({ width: width, height: height - TEMPORAL_HEIGHT, moveY: TEMPORAL_HEIGHT }, this._container, this._tooltipInstance, 'temporal-view-root');
   }
 
   render(key, value) {
