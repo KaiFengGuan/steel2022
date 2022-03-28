@@ -137,3 +137,16 @@ export function arrowData(data){
 export function getRandomID(length = 5){  //随机数 + 时间戳 生成唯一ID
   return Number(Math.random().toString().substr(3,length) + Date.now()).toString(36);
 }
+
+export function getClosestDatum(arr, x){
+  if(x <= arr[0]){
+    return 0
+  }else if(x >= arr[arr.length - 1]){
+    return arr.length - 1;
+  }
+  let index = 0;
+  while(x >= arr[index + 1]){
+    index ++;
+  }
+  return index + ((arr[index] + arr[index + 1])/2 <= x ? 1 : 0)
+}

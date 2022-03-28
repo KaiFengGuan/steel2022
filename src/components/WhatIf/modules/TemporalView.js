@@ -187,8 +187,10 @@ export default class TemporalView extends SuperGroupView {
         this._riverInstances[d] = {}
       }
     });
+    console.log(Object.keys(this._riverInstances), this._currentKeys)
     Object.keys(this._riverInstances).forEach(d => {
       if(this._currentKeys.indexOf(d) === -1){
+        console.log(d)
         delete this._riverInstances[d];
       }
     })
@@ -477,20 +479,24 @@ export default class TemporalView extends SuperGroupView {
         .call(tar => createElement(tar, "rect", cardAttrs))
         .each(function(d){
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
-            batch = d;
+            indexDatum = context._labelDetails[label],
+            batch = d,
+            batchDatum = context._batchDetails[batch];
+          
           context._riverInstances[label][batch] = new riverView({
             container: d3.select(this),
             xIndex: batch,
             yIndex: label,
-            yScale: context._labelDetails[label].yScale,
-            xScale: context._batchDetails[batch].xScale,
-            xAccessor: context._batchDetails[batch].xAccessor,
+            yScale: indexDatum.yScale,
+            xScale: batchDatum.xScale,
+            xAccessor: batchDatum.xAccessor,
             yAccessor: e => e.value,
-            step: context._batchDetails[batch].step,
-            lineDatum: context._batchDetails[batch].upid.map(e => context._upidDetails[e].dimens[label]),
+            step: batchDatum.step,
+            lineDatum: batchDatum.upid.map(e => context._upidDetails[e].dimens[label]),
             filterFunc: d => d.l > d.value || d.u < d.value, //d.extremum_l > d.value || d.extremum_u < d.value
-            pattern: context._labelDetails[label].pattern
+            pattern: indexDatum.pattern
           }).render();
+          console.log(Object.keys(context._riverInstances), label)
         }),
       update => update.transition().duration(500).ease(d3.easeLinear)
         .call(updateGroupFunc)
@@ -498,7 +504,8 @@ export default class TemporalView extends SuperGroupView {
         .each(function(d){
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
             batch = d;
-          context._riverInstances[label][batch].updateRiver({
+          console.log(label)
+          context._riverInstances[label] && context._riverInstances[label][batch].updateRiver({
             xScale: context._batchDetails[batch].xScale,
             xAccessor: context._batchDetails[batch].xAccessor,
             step: context._batchDetails[batch].step,
@@ -512,8 +519,8 @@ export default class TemporalView extends SuperGroupView {
         .remove()
         )
     .on("click", (e, d) => {
-      console.log(d)
-      console.log("click", e, e.target, d3.pointer(e))
+      // console.log(d)
+      // console.log("click", e, e.target, d3.pointer(e))
     })
     .on("mouseenter", (e, d) => {
       this._initMouseEvent({
@@ -521,14 +528,20 @@ export default class TemporalView extends SuperGroupView {
       })
     })
     .on("mouseleave", (e, d) => {
+      let target = e.target,
+        i = getParentData(target, 1),
+        j = d;
       this._removeMouseEvent({
-        'batch': d
-      })
+        'batch': d,
+      });
+      context._riverInstances[i][j].updateRiver();
     })
-    // .on('mousemove', (e, d) => {
-    //   let x = d3.pointer(e)[0];
-    //   console.log('mousemove', x, this._batchDetails[d]);
-    // })
+    .on('mousemove', (e, d) => {
+      let target = e.target,
+        i = getParentData(target, 2),
+        j = d;
+      context._riverInstances[i][j].mouseX(d3.pointer(e)[0]);
+    })
   }
 
   #joinBarElement(group, {
@@ -564,7 +577,7 @@ export default class TemporalView extends SuperGroupView {
           opacity: [0.5, 0.8]
         }, options)).render()
       })
-    console.log(this._barInstances)
+    // console.log(this._barInstances)
   }
 
   _initMouseEvent(options = {
@@ -575,7 +588,7 @@ export default class TemporalView extends SuperGroupView {
     }
     if(options['batch'] !== undefined){
       this._container.selectAll(".batchElement")
-        .attr("opacity", f => options['batch'] !== f ? 0.2 : 1);
+        .attr("opacity", f => options['batch'] !== f ? 0.6 : 1);
     }
   }
 

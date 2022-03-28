@@ -3,7 +3,8 @@ import {
   getRandomID,
   createElement,
   updateElement,
-  translate
+  translate,
+  getClosestDatum
 } from '@/utils'
 export class barView{
   constructor(obj){
@@ -159,6 +160,8 @@ export class riverView{
     this._circleAttrs = {
       class: "mergeCircle",
       r: 1.5,
+      "opacity": 1,
+      "stroke-opacity": 1,
       "fill": "white",
       id: d => `badSteel_${d.upid}`,
       "stroke-width": 1,
@@ -188,13 +191,31 @@ export class riverView{
       .call(g => updateElement(g, this._circleAttrs)));
   }
 
+  mouseX(x){
+
+    let index = getClosestDatum(this._lineDatum.map(d => this._xScale(this._xAccessor(d))), x);
+
+    let upid = this._lineDatum[index].upid;
+
+    this.findCircle(upid)
+  }
+
+  findCircle(upid){
+    this._container.selectAll(".mergeCircle")
+      .attr("stroke-opacity", 0.6)
+      .attr("r", 1.5)
+      .filter(d => d.upid === upid)
+      .attr("stroke-opacity", 1)
+      .attr("r", 3)
+  }
+
   #renderTemporal(){
 
   }
 
   updateRiver(options, t = d3.transition().duration(300)){
     let flag = false;
-    if(options.pattern !== this._pattern)flag = true;
+    if(options && options.pattern !== this._pattern)flag = true;
     for(let item in options){
       this["_" + item] = options[item];
     }
@@ -202,6 +223,7 @@ export class riverView{
     this.#initAttrs();
     if(flag){
       if(this._pattern === 'river'){
+        // [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).remove());
         this.#renderRiver()
       }else if(this._pattern === 'temporal'){
         [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).remove());
