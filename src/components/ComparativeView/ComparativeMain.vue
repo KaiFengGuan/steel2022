@@ -5,6 +5,7 @@
 <script setup>
 import { defineProps, onMounted, toRaw, watch } from 'vue-demi';
 import { ComparativeView } from './main';
+import { cloneObject } from '@/utils';
 
 const props = defineProps(['comparativeData']);
 
@@ -20,7 +21,8 @@ onMounted(() => {
 // 这里开始绘制对比视图
 const comparativeData = props.comparativeData;
 watch(comparativeData, () => {
-  renderInstance.joinData(toRaw(comparativeData.value));
+  const raw = toRaw(comparativeData.value);
+  renderInstance.joinData([cloneObject(raw), cloneObject(raw), cloneObject(raw)]);
   renderInstance.render();
 })
 

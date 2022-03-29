@@ -1,4 +1,5 @@
 import { labelColor } from '@/utils/setting';
+import EventBus from './EventBus.js';
 
 export function objClean (obj) {
   for (let item in obj) {
@@ -78,3 +79,6 @@ export function getColor(good, bad, no) {
 export * from './element';
 export * from './setting';
 export * from './renderClass';
+export * from './EventBus.js';
+
+export const eventBus = new EventBus();

@@ -4,9 +4,11 @@ import {
   labelColor,
   labelColorMap,
   getColor,
+  eventBus,
 } from '@/utils';
 import { Boundary } from './Boundary';
 import InfoView from './InfoView';
+import { MOVE_GANTT } from '../main';
 import {
   getTransformFromXScales,
   getBatchDisplayInfoData,
@@ -86,13 +88,9 @@ export default class GanttView extends SuperGroupView {
   }
 
   // 跨视图交互
-  joinInstance(key, ins) {
-    this[key] = ins;
-    this._instanceKey.push(key);
-  }
   #updateOtherInstance() { // 需要更新相关实例: 参数是与zoom相关的横轴, 这里传的是一个范围
     const disDomain = this._displayScale.domain();
-    this._instanceKey.forEach(cls => this[cls].updateXSelect(disDomain));
+    eventBus.emit(MOVE_GANTT, disDomain);
   }
   
   #width = (d, x) => x(new Date(d.endTime)) - x(new Date(d.startTime));

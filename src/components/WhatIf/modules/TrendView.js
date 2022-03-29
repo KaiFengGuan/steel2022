@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { SuperGroupView } from '@/utils/renderClass';
-import { labelColor } from '@/utils/setting';
+import { labelColor, eventBus } from '@/utils';
 import store from '@/store';
 import { SET_BRUSH_DATE } from '@/store/actionTypes';
 import { Boundary } from './Boundary';

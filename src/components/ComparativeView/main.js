@@ -14,21 +14,26 @@ export class ComparativeView extends SuperSVGView {
   }
 
   joinData(value) {
+    const _extend = [];
+    const _value = [];
+    console.log('对比视图原始数据：', value)
+    for (let val of value) {
+      _extend.push(val.max_detail);
+      delete val.max_detail;
+      const temp = [];
+      for (let key in val) {
+        temp[+key.slice(6) - 1] = val[key];
+      }
+      _value.push(temp);
+    }
+
+    console.log(_extend, _value)
+
     this._extend = value.max_detail;
     delete value.max_detail;
 
-    // 先模拟一下
-    let temp = [];
-    let i = 0;
-    for (let key in value) {
-      temp.push(value[key]);
-      i++;
-      if (i === 3) {
-        this._rawData.push([...temp]);
-        temp = [];
-        i = 0;
-      }
-    }
+    this._rawData = _value;
+    this._extend = _extend[0];
 
     console.log('数据：', this._rawData);
     console.log('范围：', this._extend);

@@ -1,4 +1,4 @@
-import { SuperSVGView } from '@/utils/renderClass';
+import { SuperSVGView, eventBus } from '@/utils';
 import { TooltipClass } from '@/components/Tooltip/main';
 import TrendView from './modules/TrendView';
 import GanttView from './modules/GanttView';
@@ -8,6 +8,9 @@ import { TREND_HEIGHT, GANTT_HEIGHT, TEMPORAL_HEIGHT } from './size';
 export const TREND = 'trend';
 export const GANTT = 'gantt';
 export const TEMPORAL = 'temporal';
+
+// 跨视图交互 订阅 key
+export const MOVE_GANTT = 'move_gantt';
 
 
 export class WhatIfView extends SuperSVGView {
@@ -25,11 +28,10 @@ export class WhatIfView extends SuperSVGView {
   render(key, value) {
     switch(key) {
       case TREND:
-        // console.log('TREND')
         this._trendView.joinData(TREND, value).render();
+        eventBus.on(MOVE_GANTT, domain => this._trendView.updateXSelect(domain)); // 订阅, 当gantt视图拖动的时候，更新趋势视图的x轴小三角
         break;
       case GANTT:
-        this._ganttView.joinInstance('trendView', this._trendView);
         this._ganttView.joinData(GANTT, value).render();
       case TEMPORAL:
         // console.log('TEMPORAL')
