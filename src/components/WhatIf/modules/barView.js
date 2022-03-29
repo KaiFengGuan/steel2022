@@ -232,10 +232,11 @@ export class riverView{
     }else{
       if(this._pattern === 'river'){
         this._container
-          .transition(t)
+          // .transition(t)
           .call(tar => updateElement(tar.select(".mergeArea"), this._areaAttrs))
           .call(tar => updateElement(tar.select(".mergeLine"), this._lineAttrs))
-          .call(g => updateElement(g.selectAll('.mergeCircle'), this._circleAttrs))
+          .call(g => updateElement(g.selectAll('.mergeCircle'), this._circleAttrs));
+        [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).raise());
       }else if(this._pattern === 'temporal'){
         // [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).remove());
         // this.#renderTemporal()
