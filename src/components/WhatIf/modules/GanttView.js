@@ -12,6 +12,7 @@ import { MOVE_GANTT } from '../main';
 import {
   getTransformFromXScales,
   getBatchDisplayInfoData,
+  getDispalyDiagnosisData,
   allInfoData,
   comeFromRight,
 } from './utils';
@@ -37,6 +38,7 @@ export default class GanttView extends SuperGroupView {
 
     this._batchDisplayMap = new Map();  // 储存显示的图元实例
     this._batchDisplayDat = new Map();  // 储存需要显示的数据
+    this._offsetMap = undefined;        // 计算规格视图图元的偏移量
 
     this._instanceKey = [];
     this._ganttHeight = 30;
@@ -88,9 +90,13 @@ export default class GanttView extends SuperGroupView {
   }
 
   // 跨视图交互
-  #updateOtherInstance() { // 需要更新相关实例: 参数是与zoom相关的横轴, 这里传的是一个范围
+  #updateOtherInstance(emitToDiag) {
     const disDomain = this._displayScale.domain();
-    eventBus.emit(MOVE_GANTT, disDomain);
+    const option = {
+      domain: disDomain,
+      diagData: emitToDiag,
+    };
+    eventBus.emit(MOVE_GANTT, option);
   }
   
   #width = (d, x) => x(new Date(d.endTime)) - x(new Date(d.startTime));
@@ -158,11 +164,15 @@ export default class GanttView extends SuperGroupView {
     const xz = event.transform.rescaleX(this._xScale);
     this._displayScale = xz;
     this.#transAll(xz);
-    this.#updateOtherInstance();
 
     // 过滤计算得到显示的规格数据
     const displayData = getBatchDisplayInfoData(xz, this._infoData);
     this.#batchInfoRender(xz, displayData, this._batchDisplayMap);
+
+    // 往诊断视图传的数据
+    const emitToDiag = getDispalyDiagnosisData(xz, this._infoData, this._offsetMap, this._viewWidth - 100);
+    // console.log(emitToDiag)
+    this.#updateOtherInstance(emitToDiag);  // 跨视图交互调用
   }
 
   #transAll(newX) {
@@ -184,17 +194,10 @@ export default class GanttView extends SuperGroupView {
     const infoH = 100;
     const infoSpace = 20;
 
-    let prevPos = undefined, offsetMap = new Map();  // 计算offset并保存
-    for (let id of idList) {
-      let val = data.get(id);
-      let curPos = newX(new Date(val.startTime)) + val.count * (infoW + infoSpace);
-      curPos = prevPos && prevPos + (infoW + infoSpace) > curPos ? prevPos + (infoW + infoSpace) : curPos;
-      offsetMap.set(id, curPos);
-      prevPos = curPos;
-    }
+    this._offsetMap = computeOffset();
 
-    const computedTrans = id => `translate(${[offsetMap.get(id), transY]})`;
-    const display = id => offsetMap.get(id) > this._viewWidth - infoW ? 'none' : '';
+    const computedTrans = id => `translate(${[this._offsetMap.get(id), transY]})`;
+    const display = id => this._offsetMap.get(id) > this._viewWidth - infoW ? 'none' : '';
     const t = this._container.transition().duration(100);
 
     this._container.selectAll('.info-root')
@@ -207,7 +210,7 @@ export default class GanttView extends SuperGroupView {
         .attr('transform', d => `translate(${[0, transY]})`)
         .attr('display', display)
         .attr('custom--handle', function (id) {
-          const offset = offsetMap.get(id);
+          const offset = that._offsetMap.get(id);
           const instance = new InfoView({width: infoW, height: infoH}, d3.select(this), null, id);
           instanceMap.set(id, instance);
           instance.joinData(data.get(id), that._infoExtent)
@@ -221,7 +224,7 @@ export default class GanttView extends SuperGroupView {
       update
         .attr('display', display)
         .attr('custom--handle', id => {
-          const offset = offsetMap.get(id);
+          const offset = that._offsetMap.get(id);
           instanceMap.get(id).update(newX, offset);
         })
         .call(g => g.transition(t)
@@ -234,6 +237,17 @@ export default class GanttView extends SuperGroupView {
       .call(g => g.transition(t)
         .attr('opacity', 0)
         .remove())
+    }
+    function computeOffset() {
+      let prevPos = undefined, offsetMap = new Map();  // 计算offset并保存
+      for (let id of idList) {
+        let val = data.get(id);
+        let curPos = newX(new Date(val.startTime)) + val.count * (infoW + infoSpace);
+        curPos = prevPos && prevPos + (infoW + infoSpace) > curPos ? prevPos + (infoW + infoSpace) : curPos;
+        offsetMap.set(id, curPos);
+        prevPos = curPos;
+      }
+      return offsetMap;
     }
   }
 }

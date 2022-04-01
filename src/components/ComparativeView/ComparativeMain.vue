@@ -1,18 +1,17 @@
 <template>
-  <div :id="menuId"></div>
+  <div :id="CompareMenuId"></div>
 </template>
 
 <script setup>
 import { defineProps, onMounted, toRaw, watch } from 'vue-demi';
-import { ComparativeView } from './main';
+import { ComparativeView, CompareMenuId } from './main';
 import { cloneObject } from '@/utils';
 
 const props = defineProps(['comparativeData']);
 
-const menuId = 'ComparativeMiew';
 let renderInstance = null;
 onMounted(() => {
-  const ele = document.getElementById(menuId);
+  const ele = document.getElementById(CompareMenuId);
   const viewWidth = ele.offsetWidth;
   const viewHeight = ele.offsetHeight;
   renderInstance = new ComparativeView({ width: viewWidth, height: viewHeight }, ele);

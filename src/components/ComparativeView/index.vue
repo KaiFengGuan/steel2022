@@ -33,6 +33,6 @@ onMounted(() => {
 <style>
 @import url('@/assets/style/MyCard.scss');
 .comparative-view {
-  height: 480px;
+  height: 350px;
 }
 </style>

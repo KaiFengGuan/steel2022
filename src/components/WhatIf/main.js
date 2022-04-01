@@ -1,5 +1,5 @@
 import { SuperSVGView, eventBus } from '@/utils';
-import { TooltipClass } from '@/components/Tooltip/main';
+import TooltipClass from '@/components/Tooltip/main';
 import TrendView from './modules/TrendView';
 import GanttView from './modules/GanttView';
 import TemporalView from './modules/TemporalView';
@@ -29,7 +29,7 @@ export class WhatIfView extends SuperSVGView {
     switch(key) {
       case TREND:
         this._trendView.joinData(TREND, value).render();
-        eventBus.on(MOVE_GANTT, domain => this._trendView.updateXSelect(domain)); // 订阅, 当gantt视图拖动的时候，更新趋势视图的x轴小三角
+        eventBus.on(MOVE_GANTT, ({ domain }) => this._trendView.updateXSelect(domain)); // 订阅, 当gantt视图拖动的时候，更新趋势视图的x轴小三角
         break;
       case GANTT:
         this._ganttView.joinData(GANTT, value).render();

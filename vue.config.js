@@ -20,6 +20,13 @@ module.exports = defineConfig({
           '^/newbaogangapi': '/api'
         }
       },
+      '/nodeServer': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/nodeServer': '/'
+        }
+      },
     },
   },
   configureWebpack: {

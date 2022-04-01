@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 
 
 
-export class TooltipClass extends SuperSVGView {
+export default class TooltipClass extends SuperSVGView {
   // w: svg初始宽度; h: svg初始高度; ele: svg挂载的父节点; tooltip: svg的id
   constructor ({ width, height }, ele, tooltipId) {
     super({ width, height }, ele);

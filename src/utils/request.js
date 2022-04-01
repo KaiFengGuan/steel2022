@@ -2,11 +2,12 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 // const baseURL = process.env.VUE_APP_BASE_API;
-const baseURL = '/newbaogangapi';
+export const baseURL = '/newbaogangapi';
+export const nodeURL = '/nodeServer';
 
 // create an axios instance
 const service = axios.create({
-  baseURL: baseURL, // url = base url + request url
+  // baseURL: baseURL, // url = base url + request url
   timeout: 500 * 1000
 })
 

@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import { baseURL } from '@/utils/request';
 
 export const ALGORITHM_OPTION = {
   T_SNE: 'T-SNE',
@@ -25,7 +26,7 @@ export function scattorData (algOpt, dateStart, dateEnd, data) {
   let algorithm = ALGORITHM_SELECT[algOpt];
 
   return request({
-    url: `/v1.0/model/${algorithm}/${dateStart}/${dateEnd}/`,
+    url: baseURL + `/v1.0/model/${algorithm}/${dateStart}/${dateEnd}/`,
     method: 'post',
     data
   })

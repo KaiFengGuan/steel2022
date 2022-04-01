@@ -3,7 +3,10 @@
  * 一些 数据处理逻辑 函数
  */
 import * as d3 from 'd3';
+import { computed } from "vue-demi";
+import { useStore } from "vuex";
 import { getColor } from '@/utils';
+import { getOneDimensionalData } from '@/api/diagnosis';
 
 /**
  * Calculate what the transform should be to achieve the mocked scale
@@ -71,6 +74,7 @@ export function allInfoData(data) {
     let groups = d3.groups(merge, d => d.platetype);
     for (let [cate, dat] of groups) {
       const plates = dat.map(e => e.detail).flat();
+      const detail = getPlatesDetail(plates);
       const infoData = getInfoTargetData(plates, infoExtent);  // 计算这个块的规格数据
       const ID = `${batIdx}-${cate}`;
       result.push({
@@ -82,12 +86,14 @@ export function allInfoData(data) {
         count: count++,
         infoData: infoData,
         link: dat.map(linkInfo),
+        detail: detail,
       });
     }
     
     if (noMerge.length) {
       noMerge.sort((a, b) => b.total - a.total);
       const plates = noMerge.map(e => e.detail).flat();
+      const detail = getPlatesDetail(plates);
       const infoData = getInfoTargetData(plates, infoExtent);  // 计算这个块的规格数据
       result.push({
         batch: batIdx,
@@ -98,6 +104,7 @@ export function allInfoData(data) {
         count: count++,
         infoData: infoData,
         link: noMerge.map(linkInfo),
+        detail: detail,
       });
     }
   }
@@ -122,8 +129,17 @@ function getInfoTargetData(plates, extent) {
   }
   return infoData;
 }
+// 计算给定钢板的id数据
+function getPlatesDetail(plates) {
+  return plates.map(d => d.upid);
+}
 
 
+// 计算 视窗内 批次数据过滤
+function filterDisplayData(newX, data) {
+  const filterHandle = (d, range) => new Date(d.startTime) >= range[0] && new Date(d.endTime) <= range[1];
+  return data.filter(d => filterHandle(d, newX.domain()));
+}
 /**
  * GanttView: 计算 视窗内 需要显示的批次规格信息数据过滤
  * @param {*} newX 
@@ -131,8 +147,7 @@ function getInfoTargetData(plates, extent) {
  * @returns 
  */
 export function getBatchDisplayInfoData(newX, data) {
-  const filterHandle = (d, range) => new Date(d.startTime) >= range[0] && new Date(d.endTime) <= range[1];
-  const disData = data.filter(d => filterHandle(d, newX.domain()));
+  const disData = filterDisplayData(newX, data);
   const newDisData = new Map();
   
   const len = disData.length;
@@ -146,6 +161,64 @@ export function getBatchDisplayInfoData(newX, data) {
   }
   
   return newDisData;
+}
+
+/**
+ * GanttView: 计算 视窗内 需要发送到诊断视图的数据
+ * @param {*} newX 
+ * @param {*} data 
+ */
+const cacheDiag = new Map();
+const newCacheDiag = new Map();
+export async function getDispalyDiagnosisData(newX, data, map, boundary) {
+  const disData = filterDisplayData(newX, data).filter(d => map.get(d.id) > boundary ? false : true);
+  const indexList = disData.map(d => d.id);
+  const N = disData.length,
+        mid = Math.floor(N / 2);
+  let l = mid - 1, r = mid, count = 0;
+  const MAX = 150;
+  const res = [];
+  while((l >= 0 || r < N) && count < MAX) {
+    if (l >= 0) {
+      count += disData[l].detail.length;
+      res.push({
+        id: disData[l].id,
+        upids: disData[l].detail,
+      });
+      l -= 1;
+    }
+    if (r < N) {
+      count += disData[r].detail.length;
+      res.push({
+        id: disData[r].id,
+        upids: disData[r].detail,
+      });
+      r++;
+    }
+  }
+  // 确保按显示的顺序返回
+  // const store = useStore();
+  // const monthPickDate = computed(() => store.state.monthPickDate);
+  res.sort((a, b) => indexList.indexOf(a.id) - indexList.indexOf(b.id));
+  // console.log('选中的日期：', monthPickDate)
+  // console.log('数据：', res)
+
+  const reqUpids = res.filter(d => !cacheDiag.has(d.id));
+  reqUpids.forEach(d => cacheDiag.set(d.id, null)); // 先占坑
+  if (reqUpids.length) {
+    let reqDiag = (await getOneDimensionalData({ date: '2021-05', upids: reqUpids })).data;
+    // console.log('请求：', reqDiag)
+    
+    // 缓存
+    reqDiag.forEach(d => cacheDiag.set(d.id, d.data));
+    // console.log(cacheDiag)
+  }
+
+  
+  return res.map(d => ({
+    id: d.id,
+    data: cacheDiag.get(d.id),
+  }));
 }
 
 

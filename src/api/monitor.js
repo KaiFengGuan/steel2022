@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import { baseURL } from '@/utils/request';
 
 /**
  * 获取时间线上的生产质量趋势统计
@@ -9,7 +10,7 @@ import request from '@/utils/request';
  */
 export function getPlatesStatistics (interval, dateStart, dateEnd) {
   return request({
-    url: `/v2.0/PlateYieldStaisticsApi/${interval}/${dateStart}/${dateEnd}/`,
+    url: baseURL + `/v2.0/PlateYieldStaisticsApi/${interval}/${dateStart}/${dateEnd}/`,
     method: 'get'
   })
 }
@@ -22,7 +23,7 @@ export function getPlatesStatistics (interval, dateStart, dateEnd) {
  */
 export function getGantData (dateStart, dateEnd) {
   return request({
-    url: `/v2.0/GanttChartApi/${dateStart}/${dateEnd}/`,
+    url: baseURL + `/v2.0/GanttChartApi/${dateStart}/${dateEnd}/`,
     method: 'get'
   })
 }
