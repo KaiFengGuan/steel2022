@@ -25,4 +25,8 @@ export default defineComponent({
   background-color: lightgray;
   border-radius: 0.5rem;
 }
+
+#app-router {
+  user-select: none;
+}
 </style>

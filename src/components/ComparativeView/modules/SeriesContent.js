@@ -10,11 +10,10 @@ export default class SeriesContent extends SuperGroupView {
     height,
     moveX = 0,
     moveY = 0,
-  } = {}, parentNode, tooltipIns, rootName) {
+  } = {}, parentNode, rootName) {
     super({ width, height, moveX, moveY }, parentNode, rootName);
 
     this._rootName = rootName;
-    this._tooltip = tooltipIns;
     this._margin = { top: 0, bottom: 0, left: 0, right: 0 };
 
     this._rawData = null;     // 原始数据
@@ -27,7 +26,7 @@ export default class SeriesContent extends SuperGroupView {
   }
 
   render() {
-    console.log('tooltip: ', compaTooltip)
+    // console.log('tooltip: ', compaTooltip)
     this._container.append('rect')
       .attr('width', this._viewWidth)
       .attr('height', this._viewHeight)

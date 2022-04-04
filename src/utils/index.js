@@ -76,6 +76,25 @@ export function getColor(good, bad, no) {
   return labelColor[a.indexOf(max)];
 }
 
+/**
+ * 
+ * @param {Function} fn 
+ * @param {Array} args 
+ * @returns 
+ */
+export function curry(fn, ...args) {
+  const n = fn.length;
+  args = args || [];
+  return function() {
+    const newArgs = args.concat(Array.prototype.slice.call(arguments));
+    if (newArgs.length < n) {
+      return curry.call(this, fn, ...newArgs);
+    } else {
+      return fn.call(this, ...newArgs);
+    }
+  }
+}
+
 export * from './element';
 export * from './setting';
 export * from './renderClass';

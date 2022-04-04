@@ -14,31 +14,13 @@
   </el-row>
 </template>
 
-<script>
-import { defineComponent } from "@vue/runtime-core";
-
+<script setup>
 import SystemTitle from '@/components/SystemTitle/index.vue';
 import DatePicker from '@/components/DatePicker/index.vue';
 import WhatIf from '@/components/WhatIf/index.vue';
 import ComparativeView from '@/components/ComparativeView/index.vue';
 import ControlPanel from '@/components/ControlPanel/index.vue';
 
-export default defineComponent({
-  name: 'Visualization',
-  components: {
-    SystemTitle,
-    DatePicker,
-    WhatIf,
-    ComparativeView,
-    ControlPanel,
-  },
-  setup () {
-
-    return {
-
-    }
-  }
-});
 </script>
 
 <style lang="scss" scoped>

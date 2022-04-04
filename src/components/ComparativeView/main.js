@@ -1,14 +1,11 @@
 import * as d3 from 'd3';
-import { onMounted } from 'vue';
-import { SuperSVGView } from "@/utils";
+import { SuperSVGView, curry } from "@/utils";
 import SeriesContent from "./modules/SeriesContent";
-import TooltipClass from '../Tooltip/main';
 
-export const CompareMenuId = 'ComparativeMiew';
-export let compaTooltip = new TooltipClass({ width: 50, height: 30 }, d3.select(`#${CompareMenuId}`), 'comparative-tooltip');
-// onMounted(() => {
-//   compaTooltip = new TooltipClass({ width: 50, height: 30 }, d3.select(`#${CompareMenuId}`), 'comparative-tooltip');
-// });
+let tooltip = null;
+export function getTooltipInstance(instance) {
+  tooltip = instance;
+}
 
 export class ComparativeView extends SuperSVGView {
   constructor ({ width, height }, ele) {
@@ -106,10 +103,32 @@ export class ComparativeView extends SuperSVGView {
           .attr('class', 'content')
           .attr('transform', (d, i) => `translate(${[(width + gap) * i + width + 20, this._seriesHeight / 2 - width / 2]})`)
           .attr('custom--handle', function (d, i) {  // 自定义执行内容
-            const instance = new SeriesContent({width: width, height: width}, d3.select(this), null, `content-${i}`);
+            const instance = new SeriesContent({width: width, height: width}, d3.select(this), `content-${i}`);
             instance.joinData(d)
               .render();
           })
+          .on('mouseenter', enterHandle)
+          .on('mouseleave', outHandle)
       )
+
+    function enterHandle(event, data) {
+      tooltip && tooltip.showTooltip({
+        x: event.pageX, y: event.pageY - 2,
+        displayText: false,
+        chartFun: curry(paintContent, {a: 1}),
+        box: { width: 60, height: 60 },
+      });
+    }
+    function outHandle(event, data) {
+      tooltip && tooltip.removeTooltip();
+    }
+
+    function paintContent(data, group) {
+      // console.log('curry test: ', data)
+      group.append('rect')
+        .attr('width', 30)
+        .attr('height', 30)
+        .attr('fill', 'white')
+    }
   }
 }
