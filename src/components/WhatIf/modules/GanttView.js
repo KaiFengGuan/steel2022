@@ -71,6 +71,8 @@ export default class GanttView extends SuperGroupView {
     console.log('绘制甘特图', this)
     console.log('数据:', this._rawData);
 
+    this._container.selectChildren('*').remove();
+
     const xDomain = this._xScale.domain();
     const timeSpan = (xDomain[1].getTime() - xDomain[0].getTime()) * 0.3;
     const xMock = this._xScale.copy().domain([new Date(xDomain[0].getTime() + timeSpan), new Date(xDomain[1].getTime() - timeSpan)]);

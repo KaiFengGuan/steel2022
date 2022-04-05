@@ -206,7 +206,7 @@ export async function getDispalyDiagnosisData(newX, data, map, boundary) {
   const reqUpids = res.filter(d => !cacheDiag.has(d.id));
   reqUpids.forEach(d => cacheDiag.set(d.id, null)); // 先占坑
   if (reqUpids.length) {
-    let reqDiag = (await getOneDimensionalData({ date: '2021-05', upids: reqUpids })).data;
+    let reqDiag = (await getOneDimensionalData({ date: '2021-06', upids: reqUpids })).data;
     // console.log('请求：', reqDiag)
     
     // 缓存
@@ -214,11 +214,12 @@ export async function getDispalyDiagnosisData(newX, data, map, boundary) {
     // console.log(cacheDiag)
   }
 
-  
-  return res.map(d => ({
+  const toDiag = res.map(d => ({
     id: d.id,
     data: cacheDiag.get(d.id),
-  }));
+  })).filter(d => d.data && d.data.length !== 0)
+  // console.log(toDiag)
+  return toDiag;
 }
 
 

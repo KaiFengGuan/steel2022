@@ -16,11 +16,10 @@ export default class ProcessView extends SuperGroupView {
     height,
     moveX = 0,
     moveY = 0,
-  } = {}, parentNode, tooltipIns, rootName) {
+  } = {}, parentNode, rootName) {
     super({ width, height, moveX, moveY }, parentNode, rootName);
 
     this._rootName = rootName;
-    this._tooltip = tooltipIns;
     this._margin = { top: 0, bottom: 0, left: 0, right: 0 };
 
     this._rawData = null;     // 原始数据
@@ -40,6 +39,8 @@ export default class ProcessView extends SuperGroupView {
   joinData(value, extent) {
     this._rawData = value;
     this._extend = extent;
+    // console.log('内部拿到的数据：', value)
+    // console.log('内部拿到的extent：', extent)
 
     this._angle = computeAngle();
     this._fillData = computeArcFillAngle(value, extent, this._angle);

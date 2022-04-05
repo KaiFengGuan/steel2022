@@ -4,6 +4,7 @@
       <system-title></system-title>
       <date-picker></date-picker>
       <control-panel></control-panel>
+      <overview></overview>
     </el-col>
     <el-col :span="16">
       <what-if class="what-if-content"></what-if>
@@ -20,6 +21,7 @@ import DatePicker from '@/components/DatePicker/index.vue';
 import WhatIf from '@/components/WhatIf/index.vue';
 import ComparativeView from '@/components/ComparativeView/index.vue';
 import ControlPanel from '@/components/ControlPanel/index.vue';
+import Overview from '@/components/OverView/index.vue';
 
 </script>
 

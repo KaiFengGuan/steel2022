@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { baseURL } from '@/utils/request';
+import { baseURL, nodeURL } from '@/utils/request';
 
 /**
  * 获取时间线上的生产质量趋势统计
@@ -24,6 +24,12 @@ export function getPlatesStatistics (interval, dateStart, dateEnd) {
 export function getGantData (dateStart, dateEnd) {
   return request({
     url: baseURL + `/v2.0/GanttChartApi/${dateStart}/${dateEnd}/`,
+    method: 'get'
+  })
+}
+export function getGanttDataFromNode (dateStart, dateEnd) {
+  return request({
+    url: nodeURL + `/gantt?dateStart=${dateStart}&dateEnd=${dateEnd}`,
     method: 'get'
   })
 }

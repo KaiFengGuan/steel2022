@@ -30,6 +30,6 @@ export default defineComponent({
 <style>
 @import url('@/assets/style/MyCard.scss');
 .control-panel {
-  height: 600px;
+  height: 480px;
 }
 </style>

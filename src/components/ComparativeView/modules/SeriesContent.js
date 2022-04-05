@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import {
   SuperGroupView,
 } from '@/utils';
-import { compaTooltip } from '../main';
 
 export default class SeriesContent extends SuperGroupView {
   constructor({

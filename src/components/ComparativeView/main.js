@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import { SuperSVGView, curry } from "@/utils";
+import { dir } from '../Tooltip/main';
 import SeriesContent from "./modules/SeriesContent";
 
 let tooltip = null;
@@ -112,8 +113,11 @@ export class ComparativeView extends SuperSVGView {
       )
 
     function enterHandle(event, data) {
+      // console.log(event.pageX, event.pageY)
       tooltip && tooltip.showTooltip({
+        id: 'ddihdafljadsjfjiasdfjk',
         x: event.pageX, y: event.pageY - 2,
+        direction: event.pageY < 100 ? dir.down : dir.up,
         displayText: false,
         chartFun: curry(paintContent, {a: 1}),
         box: { width: 60, height: 60 },
@@ -128,7 +132,11 @@ export class ComparativeView extends SuperSVGView {
       group.append('rect')
         .attr('width', 30)
         .attr('height', 30)
-        .attr('fill', 'white')
+        .attr('fill', 'red')
+      group.append('text')
+        .text('以后画点啥')
+      group.append('circle')
+        .attr('r', 5)
     }
   }
 }

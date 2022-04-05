@@ -35,7 +35,7 @@ export default defineComponent({
 
     // 开发时用, 初始默认选择的时间
     onMounted(() => {
-      monthPickDate.value = '2021-05-01 00:00:00';
+      monthPickDate.value = '2021-06-01 00:00:00';
     });
 
     // watch(monthPickDate, (newVal, oldVal) => {

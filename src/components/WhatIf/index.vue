@@ -19,10 +19,10 @@ import { useStore } from "vuex";
 
 import { HEIGHT } from './size';
 import WhatIfMain from './WhatIfMain.vue';
-import { getPlatesStatistics, getGantData } from '@/api/monitor';
+import { getPlatesStatistics, getGantData, getGanttDataFromNode } from '@/api/monitor';
 
 // 离线数据
-import platesStatistics from '@/data/platesStatistics.json';
+// import platesStatistics from '@/data/platesStatistics.json';
 import ganttData from '@/data/ganttData.json';
 
 const store = useStore();
@@ -34,19 +34,19 @@ let gantData = reactive({ value: {}});
 
 watch(monthPickDate, () => {
   // 获取生产趋势统计数据
-  // getPlatesStatistics(5, monthPickDate.value[0], monthPickDate.value[1])
-  //   .then(res => plateStati.value = res.data);
-  setTimeout(() => {
-    plateStati.value = platesStatistics;
-  }, 10);
+  getPlatesStatistics(5, monthPickDate.value[0], monthPickDate.value[1])
+    .then(res => plateStati.value = res.data);
+  // setTimeout(() => {
+  //   plateStati.value = platesStatistics;
+  // }, 10);
 });
 watch(brushDate, () => {
   // 获取甘特图数据
-  // getGantData(brushDate.value[0], brushDate.value[1])
-  //   .then(res => gantData.value = res.data);
-  setTimeout(() => {
-    gantData.value = ganttData;
-  }, 10);
+  getGanttDataFromNode(brushDate.value[0], brushDate.value[1])
+    .then(res => gantData.value = res.data);
+  // setTimeout(() => {
+  //   gantData.value = ganttData;
+  // }, 10);
 })
 
 </script>
