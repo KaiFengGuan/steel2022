@@ -7,11 +7,11 @@ export const dir = {
   down: 'down'
 };
 
-function pathShape(direction, box, horizon, vertical, w, h) {
+function pathShape(direction, box, horizon, vertical, w, h /* w h 是那个尖儿的底和高 */) {
   let point = [
     [0, 0], [-w/2, -h], [-box.width/2 - horizon, -h],
-    [-box.width/2 - horizon, -box.height - vertical*2],
-    [box.width/2 + horizon, -box.height - vertical*2],
+    [-box.width/2 - horizon, -box.height - vertical*4],
+    [box.width/2 + horizon, -box.height - vertical*4],
     [box.width/2 + horizon, -h], [w/2, -h], [0, 0]
   ]
 

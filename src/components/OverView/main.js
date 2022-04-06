@@ -117,9 +117,6 @@ export class OverView extends SuperSVGView {
     function paintContent(data, extent, group) {
       const instance = new ProcessView({ width: contentWidth, height: contentWidth}, group, `${id}-content`);
       instance.joinData(data, extent).render();
-      
-      group.append('circle')
-        .attr('r', 10)
     }
   }
 

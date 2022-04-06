@@ -5,6 +5,7 @@ import {
   labelColorMap,
   getColor,
   eventBus,
+  debounce,
 } from '@/utils';
 import { Boundary } from './Boundary';
 import InfoView from './InfoView';
@@ -92,12 +93,9 @@ export default class GanttView extends SuperGroupView {
   }
 
   // 跨视图交互
-  #updateOtherInstance(emitToDiag) {
+  #updateOtherInstance() {
     const disDomain = this._displayScale.domain();
-    const option = {
-      domain: disDomain,
-      diagData: emitToDiag,
-    };
+    const option = { domain: disDomain };
     eventBus.emit(MOVE_GANTT, option);
   }
   
@@ -171,10 +169,11 @@ export default class GanttView extends SuperGroupView {
     const displayData = getBatchDisplayInfoData(xz, this._infoData);
     this.#batchInfoRender(xz, displayData, this._batchDisplayMap);
 
+    // 跨视图交互: 往趋势视图传时间范围
+    this.#updateOtherInstance();
+
     // 往诊断视图传的数据
-    const emitToDiag = getDispalyDiagnosisData(xz, this._infoData, this._offsetMap, this._viewWidth - 100);
-    // console.log(emitToDiag)
-    this.#updateOtherInstance(emitToDiag);  // 跨视图交互调用
+    getDispalyDiagnosisData(xz, this._infoData, this._offsetMap, this._viewWidth - 100);
   }
 
   #transAll(newX) {

@@ -5,7 +5,8 @@
 import * as d3 from 'd3';
 import { computed } from "vue-demi";
 import { useStore } from "vuex";
-import { getColor } from '@/utils';
+import { MOVE_GANTT } from '../main';
+import { debounce, eventBus, getColor } from '@/utils';
 import { getOneDimensionalData } from '@/api/diagnosis';
 
 /**
@@ -170,7 +171,8 @@ export function getBatchDisplayInfoData(newX, data) {
  */
 const cacheDiag = new Map();
 const newCacheDiag = new Map();
-export async function getDispalyDiagnosisData(newX, data, map, boundary) {
+export const getDispalyDiagnosisData = debounce((newX, data, map, boundary) => getDispalyDiagnosisData_1(newX, data, map, boundary), 1000);
+async function getDispalyDiagnosisData_1(newX, data, map, boundary) {
   const disData = filterDisplayData(newX, data).filter(d => map.get(d.id) > boundary ? false : true);
   const indexList = disData.map(d => d.id);
   const N = disData.length,
@@ -197,29 +199,25 @@ export async function getDispalyDiagnosisData(newX, data, map, boundary) {
     }
   }
   // 确保按显示的顺序返回
-  // const store = useStore();
-  // const monthPickDate = computed(() => store.state.monthPickDate);
   res.sort((a, b) => indexList.indexOf(a.id) - indexList.indexOf(b.id));
-  // console.log('选中的日期：', monthPickDate)
-  // console.log('数据：', res)
 
   const reqUpids = res.filter(d => !cacheDiag.has(d.id));
   reqUpids.forEach(d => cacheDiag.set(d.id, null)); // 先占坑
   if (reqUpids.length) {
     let reqDiag = (await getOneDimensionalData({ date: '2021-06', upids: reqUpids })).data;
-    // console.log('请求：', reqDiag)
     
     // 缓存
     reqDiag.forEach(d => cacheDiag.set(d.id, d.data));
-    // console.log(cacheDiag)
   }
 
   const toDiag = res.map(d => ({
     id: d.id,
     data: cacheDiag.get(d.id),
   })).filter(d => d.data && d.data.length !== 0)
-  // console.log(toDiag)
-  return toDiag;
+  console.log('in function: ', toDiag)
+  
+  // 往诊断视图发
+  eventBus.emit(MOVE_GANTT, { diagData: toDiag });
 }
 
 

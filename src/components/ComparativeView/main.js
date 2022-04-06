@@ -23,30 +23,6 @@ export class ComparativeView extends SuperSVGView {
   }
 
   joinData(value) {
-    // const _extend = [];
-    // const _value = [];
-    // console.log('对比视图原始数据：', value)
-    // for (let val of value) {
-    //   _extend.push(val.max_detail);
-    //   delete val.max_detail;
-    //   const temp = [];
-    //   for (let key in val) {
-    //     temp[+key.slice(6) - 1] = val[key];
-    //   }
-    //   _value.push(temp);
-    // }
-
-    // console.log(_extend, _value)
-
-    // this._extend = value.max_detail;
-    // delete value.max_detail;
-
-    // this._rawData = _value;
-    // this._extend = _extend[0];
-
-    // console.log('数据：', this._rawData);
-    // console.log('范围：', this._extend);
-
     this._rawData = new Array(5).fill().map(() => new Array(3).fill(0));
     for (let i = 0; i < this._rawData.length; i++) {
       for (let j = 0; j < this._rawData[i].length; j++) {
@@ -113,7 +89,6 @@ export class ComparativeView extends SuperSVGView {
       )
 
     function enterHandle(event, data) {
-      // console.log(event.pageX, event.pageY)
       tooltip && tooltip.showTooltip({
         id: 'ddihdafljadsjfjiasdfjk',
         x: event.pageX, y: event.pageY - 2,
@@ -128,7 +103,6 @@ export class ComparativeView extends SuperSVGView {
     }
 
     function paintContent(data, group) {
-      // console.log('curry test: ', data)
       group.append('rect')
         .attr('width', 30)
         .attr('height', 30)

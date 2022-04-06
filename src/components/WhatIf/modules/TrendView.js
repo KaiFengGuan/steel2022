@@ -64,6 +64,8 @@ export default class TrendView extends SuperGroupView {
   }
 
   updateXSelect(disDomain) {  // 提示gantt图显示的区域
+    if (!disDomain) return;
+
     const tranY = this._viewHeight;
     this._container.selectAll('.zoom-range')
       .data(['left', 'right'], d => d)
