@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import {
   SuperGroupView,
+  labelColor,
 } from '@/utils';
 
 export default class SeriesContent extends SuperGroupView {
@@ -29,11 +30,12 @@ export default class SeriesContent extends SuperGroupView {
     this._container.append('rect')
       .attr('width', this._viewWidth)
       .attr('height', this._viewHeight)
-      .attr('fill', 'white')
-      .attr('stroke', 'black')
-      .attr('stroke-width', 1)
+      .attr('fill', this._rawData > 5 ? labelColor[Math.floor(Math.random() * 2)] : labelColor[2])
+      // .attr('stroke', 'black')
+      // .attr('stroke-width', 1)
     
     const text = this._container.append('text')
+      .attr('fill', 'white')
       .text(this._rawData)
     const box = text.node().getBBox();
     text.attr('transform', `translate(${[(this._viewWidth - box.width) / 2, (this._viewHeight + box.height) / 2 - 3]})`)
