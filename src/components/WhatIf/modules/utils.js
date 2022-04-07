@@ -75,6 +75,11 @@ export function allInfoData(data) {
     let groups = d3.groups(merge, d => d.platetype);
     for (let [cate, dat] of groups) {
       const plates = dat.map(e => e.detail).flat();
+      const batch_label = d3.groups(plates, d => d.flag_lable).sort((a, b) => a[0] - b[0]);
+      const color = getColor(
+        batch_label[0] ? batch_label[0][1].length : 0, 
+        batch_label[1] ? batch_label[1][1].length : 0, 
+        batch_label[2] ? batch_label[2][1].length : 0);
       const detail = getPlatesDetail(plates);
       const infoData = getInfoTargetData(plates, infoExtent);  // 计算这个块的规格数据
       const ID = `${batIdx}-${cate}`;
@@ -88,12 +93,18 @@ export function allInfoData(data) {
         infoData: infoData,
         link: dat.map(linkInfo),
         detail: detail,
+        color: color,
       });
     }
     
     if (noMerge.length) {
       noMerge.sort((a, b) => b.total - a.total);
       const plates = noMerge.map(e => e.detail).flat();
+      const batch_label = d3.groups(plates, d => d.flag_lable).sort((a, b) => a[0] - b[0]);
+      const color = getColor(
+        batch_label[0] ? batch_label[0][1].length : 0, 
+        batch_label[1] ? batch_label[1][1].length : 0, 
+        batch_label[2] ? batch_label[2][1].length : 0);
       const detail = getPlatesDetail(plates);
       const infoData = getInfoTargetData(plates, infoExtent);  // 计算这个块的规格数据
       result.push({
@@ -106,6 +117,7 @@ export function allInfoData(data) {
         infoData: infoData,
         link: noMerge.map(linkInfo),
         detail: detail,
+        color: color,
       });
     }
   }

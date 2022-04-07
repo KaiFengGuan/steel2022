@@ -72,7 +72,7 @@ export default class TrendView extends SuperGroupView {
       .join(
         enter => enter.append('path')
           .attr('class', 'zoom-range')
-          .attr('fill', 'red')
+          .attr('fill', '#666')
           .attr('d', Boundary.zoomDisArea({ width: 10, height: 10 })),
       )
       .attr('transform', (d, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)

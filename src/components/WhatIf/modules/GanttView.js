@@ -132,11 +132,12 @@ export default class GanttView extends SuperGroupView {
 
   #batchBoundary(group, xScale) {
     const width = 10;
-    const height = this._viewHeight - this._margin.bottom - this._margin.top;
-    group.attr('fill', 'red')
+    // const height = this._viewHeight - this._margin.bottom - this._margin.top;
+    const height = width;
+    group.attr('fill', '#b4b3b3')
     group.append('path')
       .attr('class', 'batch-boundary')
-      .attr('transform', d => `translate(${xScale(new Date(d.startTime))}, 0)`)
+      .attr('transform', d => `translate(${xScale(new Date(d.startTime)) - 2}, 0)`)
       .attr('d', Boundary.batch({ width, height }))
   }
 

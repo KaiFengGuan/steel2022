@@ -44,7 +44,7 @@ setTimeout(()=>{
   time.value = 1
 })
 watch(time, () => {
-  // console.log(batchData)
+  console.log('batch update', batchData)
   renderInstance.render(TEMPORAL, batchData);
 });
 // console.log(modulesFiles)

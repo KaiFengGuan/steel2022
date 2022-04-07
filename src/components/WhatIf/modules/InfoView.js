@@ -65,7 +65,7 @@ export default class InfoView extends SuperGroupView {
     this._container.append('rect')
       .attr('width', this._viewWidth)
       .attr('height', this._viewHeight)
-      .attr('stroke', labelColorMap[0])
+      .attr('stroke', this._rawData.color)
       .attr('stroke-width', 2)
       .attr('fill', 'white')
 
