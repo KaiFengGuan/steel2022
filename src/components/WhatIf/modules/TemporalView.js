@@ -16,7 +16,7 @@ import { SuperGroupView,
   createIcon
 } from "@/utils";
 
-import { barView, riverView } from "./barView";
+import { barView, labelName, riverView } from "./barView";
 
 export default class TemporalView extends SuperGroupView {
   constructor({
@@ -33,15 +33,23 @@ export default class TemporalView extends SuperGroupView {
    * 添加原始数据，并转换为绘图数据
    */
   joinData(key, data) {
+    if(this._rawData === undefined){ //初始化
+      this._batchName = data.map(d => d.id);
+      this._rawData = data.map(d => d.data);
+      //issue 1：根据data自动计算label数量，并取得排序功能。
+      this._labelName = labelName;
+      console.log("initData", data)
+    }else{  //更新数据
+      let newData = {};
+      for(let item in data){
+        newData[data[item].id] = data[item].data;
+      }
+      // console.log("updateData", data)
+      this.updateData(data.map(d => d.id), newData);
+      return this;
+    }
+
     this._mergeStatus = false;
-
-    this._rawData = data;
-
-    //issue 1：根据data自动计算label数量，并取得排序功能。
-    this._labelName = data[0][0]["one_dimens"].map(d => d.name);
-
-    this._batchName = new Array(6).fill(0).map((_, i) => "sort" + i);
-    console.log(this._batchName, this._rawData)
     this._batchDetails = {};
     this._upidDetails = {};
     this._mergeArray = [];
@@ -49,19 +57,21 @@ export default class TemporalView extends SuperGroupView {
 
     for(let item in this._batchName){
       let key = this._batchName[item],
-        raw = this._rawData[item];
+        datum = this._rawData[item];
       this._batchDetails[key] = {
-        raw: raw,
-        timeDomain: d3.extent(raw, d => new Date(d.toc)),
-        discreteDomain: raw.map(d => d.upid),
+        raw: datum,
+        timeDomain: d3.extent(datum, d => new Date(d.toc)),
+        discreteDomain: datum.map(d => d.upid),
         oldXRange: [0, 0],
         xRange: [0, 0],
         xScale: null,
-        upid: raw.map(d => d.upid),
-        width: raw.length * this._mingap
+        upid: datum.map(d => d.upid),
+        width: datum.length * this._mingap
       };
-      for(let index in raw){
-        let obj = raw[index],
+      // console.log(datum)
+      for(let index in datum){
+        // console.log(datum[index].upid)
+        let obj = datum[index],
           tqOrder = sortedIndex(obj.CONTQ, true),
           t2Order = sortedIndex(obj.CONTJ, true);
         this._upidDetails[obj.upid] = obj;
@@ -79,8 +89,9 @@ export default class TemporalView extends SuperGroupView {
       this._mergeArray.push(this._batchDetails[key].width);
     }
 
-    console.log(this._batchDetails);
-    console.log(this._upidDetails);
+    // console.log(this._batchDetails);
+    // console.log(this._upidDetails);
+    // console.log(this._mergeArray);
 
     this._labelDetails = {};
 
@@ -101,10 +112,12 @@ export default class TemporalView extends SuperGroupView {
     this.#initSetting();
     this.reflow();
 
+    this.render();
+
     return this;
   }
 
-  updateData(newBatch){
+  updateData(newBatch, newData){
 
     let leftBatch = [...d3.intersection(this._batchName, newBatch)],
       removeKeys = [...d3.difference(this._batchName, leftBatch)],
@@ -122,19 +135,19 @@ export default class TemporalView extends SuperGroupView {
 
     for(let item in newKeys){
       let key = newKeys[item],
-        raw = this._rawData[item];
+        datum = newData[key];
       this._batchDetails[key] = {
-        raw: raw,
-        timeDomain: d3.extent(raw, d => new Date(d.toc)),
-        discreteDomain: raw.map(d => d.upid),
+        raw: datum,
+        timeDomain: d3.extent(datum, d => new Date(d.toc)),
+        discreteDomain: datum.map(d => d.upid),
         oldXRange: [0, 0],
         xRange: [0, 0],
         xScale: null,
-        upid: raw.map(d => d.upid),
-        width: raw.length * this._mingap
+        upid: datum.map(d => d.upid),
+        width: datum.length * this._mingap
       };
-      for(let index in raw){
-        let obj = raw[index],
+      for(let index in datum){
+        let obj = datum[index],
           tqOrder = sortedIndex(obj.CONTQ, true),
           t2Order = sortedIndex(obj.CONTJ, true);
         this._upidDetails[obj.upid] = obj;
@@ -151,7 +164,7 @@ export default class TemporalView extends SuperGroupView {
       }
     }
 
-    this._batchName = newBatch;
+    // this._batchName = newBatch;
     this._mergeArray = this._batchName.map(d => this._batchDetails[d].width);
 
     this.#initSetting();
@@ -231,12 +244,17 @@ export default class TemporalView extends SuperGroupView {
     this._currentKeys = arr;
 
     this._currentKeys.forEach(d => {
-      let arr = Object.values(this._upidDetails).map(e => e.dimens[d]);
-      LD[d].yScale = d3.scaleLinear().range([0, this._mergeHeight])
-      .domain(
-        [d3.min([arr.map(d => d.value), arr.map(d => d.extremum_l)].flat()) * 0.95,
-          d3.max([arr.map(d => d.value), arr.map(d => d.extremum_u)].flat()) * 1.05])
-        // d3.extent([arr.map(d => d.value), arr.map(d => d.extremum_l), arr.map(d => d.extremum_u)].flat()))
+      let arr = Object.values(this._upidDetails).map(e => e.dimens[d]).filter(d => d !== undefined);
+      if(arr.length !== 0){
+        LD[d].yScale = d3.scaleLinear().range([0, this._mergeHeight])
+        .domain(
+          [d3.min([arr.map(d => d.value), arr.map(d => d.extremum_l)].flat()) * 0.95,
+            d3.max([arr.map(d => d.value), arr.map(d => d.extremum_u)].flat()) * 1.05])
+          // d3.extent([arr.map(d => d.value), arr.map(d => d.extremum_l), arr.map(d => d.extremum_u)].flat()))
+      }else{
+        LD[d].yScale = null;
+      }
+
       if(this._riverInstances[d] === undefined){
         this._riverInstances[d] = {}
       }
@@ -278,9 +296,9 @@ export default class TemporalView extends SuperGroupView {
     this.reflow();
     this.#renderSingleRow();
 
-    setTimeout(()=>{
-      this.updateData(['sort1', 'sort2', 'sort3', 'sort4', 'sort5', 'sort8']);
-    }, 5000)
+    // setTimeout(()=>{
+    //   this.updateData(['sort1', 'sort2', 'sort3', 'sort4', 'sort5', 'sort8']);
+    // }, 5000)
     return this;
   }
 
@@ -538,8 +556,10 @@ export default class TemporalView extends SuperGroupView {
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
             indexDatum = context._labelDetails[label],
             batch = d,
-            batchDatum = context._batchDetails[batch];
-          // console.log('enter', label, batch)
+            batchDatum = context._batchDetails[batch],
+            lineDatum = batchDatum.upid.map(e => context._upidDetails[e].dimens[label]);
+            if(lineDatum.filter(d => d !== undefined).length === 0)return;
+        //   // console.log('enter', label, batch)
           context._riverInstances[label][batch] = new riverView({
             container: d3.select(this),
             xIndex: batch,
@@ -549,7 +569,7 @@ export default class TemporalView extends SuperGroupView {
             xAccessor: batchDatum.xAccessor,
             yAccessor: e => e.value,
             step: batchDatum.step,
-            lineDatum: batchDatum.upid.map(e => context._upidDetails[e].dimens[label]),
+            lineDatum: lineDatum,
             filterFunc: d => d.l > d.value || d.u < d.value, //d.extremum_l > d.value || d.extremum_u < d.value
             pattern: indexDatum.pattern
           }).render();
@@ -562,14 +582,16 @@ export default class TemporalView extends SuperGroupView {
           let label = getParentData(this, 1),
             indexDatum = context._labelDetails[label],
             batch = d,
-            batchDatum = context._batchDetails[batch];
+            batchDatum = context._batchDetails[batch],
+            lineDatum = batchDatum.upid.map(e => context._upidDetails[e].dimens[label]);
+            if(lineDatum.filter(d => d !== undefined).length === 0)return;
           // console.log('update', label, batch)//, context._batchDetails)
           context._riverInstances[label] && context._riverInstances[label][batch] && context._riverInstances[label][batch].updateRiver({
             xScale: context._batchDetails[batch].xScale,
             yScale: indexDatum.yScale,
             xAccessor: context._batchDetails[batch].xAccessor,
             step: context._batchDetails[batch].step,
-            lineDatum: batchDatum.upid.map(e => context._upidDetails[e].dimens[label]),
+            lineDatum: lineDatum,
             pattern: context._labelDetails[label].pattern
           })
         })
@@ -595,13 +617,13 @@ export default class TemporalView extends SuperGroupView {
       this._removeMouseEvent({
         'batch': d,
       });
-      context._riverInstances[i]?.[j]?.updateRiver();
+      context._riverInstances?.[i]?.[j]?.updateRiver();
     })
     .on('mousemove', (e, d) => {
       let target = e.target,
         i = getParentData(target, 2),
         j = d;
-      context._riverInstances[i]?.[j]?.mouseX(d3.pointer(e)[0]);
+      context._riverInstances?.[i]?.[j]?.mouseX(d3.pointer(e)[0]);
     })
   }
 
@@ -620,13 +642,15 @@ export default class TemporalView extends SuperGroupView {
     .append("g")
     .call(g => updateElement(g, groupAttrs))
     .each(function(d){
-        let arr = Object.values(context._upidDetails).map(e => e.dimens[d].value),
+      let datum = Object.values(context._upidDetails).filter(e => e.dimens[d] !== undefined);
+      if(datum.length === 0)return;
+        let arr = datum.map(e => e.dimens[d].value),
           data = d3.bin().thresholds(20)(arr),
           container = d3.select(this),
           xDomain = [data[0].x0, data[data.length - 1].x1],
           height = context._labelDetails[d].height - context._cardMargin.top - context._cardMargin.bottom,
-          bad = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 0).map(e => e.dimens[d].value)),
-          good = d3.bin().thresholds(10)(Object.values(context._upidDetails).filter(e => e.fqc_label === 1).map(e => e.dimens[d].value));
+          bad = d3.bin().thresholds(10)(datum.filter(e => e.fqc_label === 0).map(e => e.dimens[d].value)),
+          good = d3.bin().thresholds(10)(datum.filter(e => e.fqc_label === 1).map(e => e.dimens[d].value));
         d3.select(this).call(g => updateElement(g, groupAttrs));
       context._barInstances[d] = new barView(Object.assign({
           container: container,
