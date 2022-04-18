@@ -4,7 +4,8 @@ import {
   createElement,
   updateElement,
   translate,
-  getClosestDatum
+  getClosestDatum,
+  mergeColor
 } from '@/utils'
 export class barView{
   constructor(obj){
@@ -136,7 +137,7 @@ export class riverView{
   #initAttrs(){
     this._lineAttrs = {
       class: "mergeLine",
-      stroke: "#B9C6CD",
+      stroke: mergeColor[1],
       "stroke-width": 1,
       fill: "none",
       d: d3.line()
@@ -154,7 +155,7 @@ export class riverView{
       (this._lineDatum),
       class: "mergeArea",
       opacity: 0.5,
-      fill: "#B9C6CD"
+      fill: mergeColor[1]
     };
 
     this._circleAttrs = {
@@ -197,7 +198,7 @@ export class riverView{
 
     let upid = this._lineDatum[index].upid;
 
-    this.findCircle(upid)
+    // this.findCircle(upid)
   }
 
   findCircle(upid){
@@ -210,7 +211,61 @@ export class riverView{
   }
 
   #renderTemporal(){
+    // console.log("temporal")
+    // console.log(this._lineDatum.length, this._lineDatum.filter(this._filterFunc).length)
 
+    let baseRadius = 2,
+    arrowScale = d3.scaleLinear().domain([-3, 3]).range([10, -10]),
+    translateX = d => this._xScale(this._xAccessor(this._lineDatum[d])),
+    direction = d => this._filterArr[0](this._lineDatum[d]);
+    const singleAttrs = {
+      class: 'singleArrow',
+      transform: d => translate([translateX(d), this._height / 2]),
+      stroke: mergeColor[0],
+      fill: 'none',
+      'marker-end': 'url(#shape-arrow)',
+      d: e => d3.linkVertical().x(d => d.x).y(d => d.y)({ source: { x: 0, y:  0 },
+        target: { x: 0, y: direction(e) ? -10 : 10} })
+    }
+
+    this._arrowDatum = classifyFunc(this._lineDatum, this._filterArr);
+
+    this._container
+      .selectAll(".singleArrow")
+      .data(this._arrowDatum.single, d => d)
+      .join(enter => enter.append("path")
+        .call(g => updateElement(g, singleAttrs)),
+        update => update.call(g => updateElement(g, singleAttrs)),
+        exit => exit.remove())
+      
+    const interArrowAttrs = {
+      stroke: mergeColor[0],
+      class: 'interArrow',
+      fill: 'none',
+      d: e => d3.linkVertical().x(d => d.x).y(d => d.y)({ source: { x: 0, y: 0 },
+        target: {x: 0, y: direction(e[0]) ? -10 : 10} }), 
+      'marker-end': 'url(#shape-arrow)',
+      transform: d => translate([(translateX(d[0]) + translateX(d[d.length - 1])+ this._step)/2, this._height / 2])
+    },
+    interLineAttrs = {
+      class: 'interLine',
+      transform: d => translate([translateX(d[0]), this._height / 2]),
+      width: d => translateX(d[d.length - 1]) - translateX(d[0]) + this._step,
+      height: 1.25 * baseRadius,
+      fill: mergeColor[0],
+      stroke: 'none'
+    }
+
+    this._container
+      .selectAll(".intersection")
+      .data(this._arrowDatum.intersection, d => d)
+      .join(enter => enter.append("g")
+        .attr("class", "intersection")
+        .call(g => createElement(g, "path", interArrowAttrs))
+        .call(g => createElement(g, 'rect', interLineAttrs)),
+        update => update,
+        exit => exit.remove())
+    // console.log();
   }
 
   updateRiver(options, t = d3.transition().duration(300)){
@@ -223,7 +278,7 @@ export class riverView{
     this.#initAttrs();
     if(flag){
       if(this._pattern === 'river'){
-        // [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).remove());
+        [".intersection", ".singleArrow"].map(d =>  this._container.selectAll(d).remove());
         this.#renderRiver()
       }else if(this._pattern === 'temporal'){
         [".mergeLine", ".mergeArea", ".mergeCircle"].map(d =>  this._container.selectAll(d).remove());
@@ -276,3 +331,38 @@ export const labelName = ["charging_temp_act", "tgtplatelength2", "tgtplatethick
 "max_p1", "max_p2", "max_p5", "max_sct",
 "min_fct", "min_p1", "min_p2", "min_p5", "min_sct", "std_fct", "std_p1", "std_p2",
 "std_p5", "std_sct"]
+
+export function classifyFunc(unCateloguedData, arr){
+  const normalIndex = [];
+  for(let i = 0; i < unCateloguedData.length; i++){
+    if(arr.every(func => !func(unCateloguedData[i]))){
+      normalIndex.push(i);
+    }
+  }
+  const res = [...d3.difference(unCateloguedData.map((_, i) => i), normalIndex)];
+  if(res.length === 0){
+    return {
+      single: [],
+      intersection: []
+    };
+  }
+
+  const flatData = [[res[0]]],
+    validate = unCateloguedData.map(d => arr.map(func => func(d) ? 1 : 0).join(''));
+  for(let item = 1; item < res.length; item ++){
+    let last = flatData[flatData.length - 1];
+
+    if(last[last.length - 1] === res[item] - 1 
+        && validate[item] === validate[last[last.length - 1]]){
+      last.push(res[item])
+    }else{
+      flatData.push([res[item]])
+    }
+  }
+  let single = flatData.filter(d => d.length === 1),
+    intersection = flatData.filter(d => d.length !== 1);
+  return {
+    single: single.flat(),
+    intersection: intersection
+  }
+}

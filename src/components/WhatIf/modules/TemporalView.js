@@ -103,7 +103,7 @@ export default class TemporalView extends SuperGroupView {
         order: +item,
         y: this._viewHeight,
         yScale: null,
-        pattern: "river"
+        pattern: "temporal"
       }
     }
 
@@ -170,6 +170,8 @@ export default class TemporalView extends SuperGroupView {
     this.#initSetting();
     this.reflow();
     this.reRender();
+
+    this._container.selectAll(".iconDetails").raise();
   }
 
   #initSetting(){
@@ -297,7 +299,7 @@ export default class TemporalView extends SuperGroupView {
     this.#renderSingleRow();
 
     // setTimeout(()=>{
-    //   this.updateData(['sort1', 'sort2', 'sort3', 'sort4', 'sort5', 'sort8']);
+    //   this.updateData(["sort1", "sort2", "sort3", "sort4", "sort5", "sort8"]);
     // }, 5000)
     return this;
   }
@@ -503,7 +505,7 @@ export default class TemporalView extends SuperGroupView {
           .attr("transform", function(){return d3.select(this).attr("newY")});
         [zoom, pin].map(func);
         this._initMouseEvent({
-          'label': d
+          "label": d
         })
       })
       .on("mouseleave", (e, d) => {
@@ -553,14 +555,18 @@ export default class TemporalView extends SuperGroupView {
         .call(enter => enter.transition().duration(500).ease(d3.easeLinear).call(updateGroupFunc))
         .call(tar => createElement(tar, "rect", cardAttrs))
         .each(function(d){
+          let {width, height} = this.getBBox();
+          console.log(width, height)
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
             indexDatum = context._labelDetails[label],
             batch = d,
             batchDatum = context._batchDetails[batch],
             lineDatum = batchDatum.upid.map(e => context._upidDetails[e].dimens[label]);
             if(lineDatum.filter(d => d !== undefined).length === 0)return;
-        //   // console.log('enter', label, batch)
+        //   // console.log("enter", label, batch)
           context._riverInstances[label][batch] = new riverView({
+            width,
+            height,
             container: d3.select(this),
             xIndex: batch,
             yIndex: label,
@@ -571,6 +577,7 @@ export default class TemporalView extends SuperGroupView {
             step: batchDatum.step,
             lineDatum: lineDatum,
             filterFunc: d => d.l > d.value || d.u < d.value, //d.extremum_l > d.value || d.extremum_u < d.value
+            filterArr: [d => d.l > d.value &&  d.fqc_label !== 0, d => d.u < d.value && d.fqc_label !== 0],
             pattern: indexDatum.pattern
           }).render();
           // console.log(Object.keys(context._riverInstances), label)
@@ -585,7 +592,7 @@ export default class TemporalView extends SuperGroupView {
             batchDatum = context._batchDetails[batch],
             lineDatum = batchDatum.upid.map(e => context._upidDetails[e].dimens[label]);
             if(lineDatum.filter(d => d !== undefined).length === 0)return;
-          // console.log('update', label, batch)//, context._batchDetails)
+          // console.log("update", label, batch)//, context._batchDetails)
           context._riverInstances[label] && context._riverInstances[label][batch] && context._riverInstances[label][batch].updateRiver({
             xScale: context._batchDetails[batch].xScale,
             yScale: indexDatum.yScale,
@@ -607,7 +614,7 @@ export default class TemporalView extends SuperGroupView {
     })
     .on("mouseenter", (e, d) => {
       this._initMouseEvent({
-        'batch': d
+        "batch": d
       })
     })
     .on("mouseleave", (e, d) => {
@@ -615,11 +622,11 @@ export default class TemporalView extends SuperGroupView {
         i = getParentData(target, 1),
         j = d;
       this._removeMouseEvent({
-        'batch': d,
+        "batch": d,
       });
       context._riverInstances?.[i]?.[j]?.updateRiver();
     })
-    .on('mousemove', (e, d) => {
+    .on("mousemove", (e, d) => {
       let target = e.target,
         i = getParentData(target, 2),
         j = d;
@@ -667,23 +674,23 @@ export default class TemporalView extends SuperGroupView {
 
   _initMouseEvent(options = {
   }){
-    if(options['label'] !== undefined){
+    if(options["label"] !== undefined){
       this._container.selectAll(".labelGroup")
-        .attr("opacity", f => options['label'] !== f ? 0.6 : 1);
+        .attr("opacity", f => options["label"] !== f ? 0.6 : 1);
     }
-    if(options['batch'] !== undefined){
+    if(options["batch"] !== undefined){
       this._container.selectAll(".batchElement")
-        .attr("opacity", f => options['batch'] !== f ? 0.6 : 1);
+        .attr("opacity", f => options["batch"] !== f ? 0.6 : 1);
     }
   }
 
   _removeMouseEvent(options = {
   }){
-    if(options['label'] !== undefined){
+    if(options["label"] !== undefined){
       d3.selectAll(".labelGroup")
         .attr("opacity", 1);
     }
-    if(options['batch'] !== undefined){
+    if(options["batch"] !== undefined){
       d3.selectAll(".batchElement")
         .attr("opacity", 1);
     }
@@ -752,7 +759,7 @@ export default class TemporalView extends SuperGroupView {
       .append("path")
       .call(g => updateElement(g, queryAttrs))
     icon.on("click", (e, d) => {
-      this._labelDetails[d].pattern = this._labelDetails[d].pattern === 'river' ? 'temporal' : 'river';
+      this._labelDetails[d].pattern = this._labelDetails[d].pattern === "river" ? "temporal" : "river";
       this.#joinBatchElement(d3.selectAll(".labelGroup").filter(e => e === d))
     })
   }
