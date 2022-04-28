@@ -142,7 +142,11 @@ export class riverView{
       fill: "none",
       d: d3.line()
         .y(e => this._yScale(this._yAccessor(e)))
-        .x((e, f) => this._xScale(this._xAccessor(e)) + (f === this._lineDatum.length - 1 ? this._step : 0))
+        .x((e, f) => {
+          // console.log((e))
+          // console.log(this._xAccessor(e))
+          return this._xScale(this._xAccessor(e)) + (f === this._lineDatum.length - 1 ? this._step : 0)
+        })
         .curve(d3.curveLinear)
         (this._lineDatum)
     };

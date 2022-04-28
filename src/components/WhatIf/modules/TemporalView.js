@@ -38,13 +38,13 @@ export default class TemporalView extends SuperGroupView {
       this._rawData = data.map(d => d.data);
       //issue 1：根据data自动计算label数量，并取得排序功能。
       this._labelName = labelName;
-      console.log("initData", data)
+      // console.log("initData", data)
     }else{  //更新数据
       let newData = {};
       for(let item in data){
         newData[data[item].id] = data[item].data;
       }
-      // console.log("updateData", data)
+      // console.log("updateData")
       this.updateData(data.map(d => d.id), newData);
       return this;
     }
