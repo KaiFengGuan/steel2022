@@ -22,6 +22,7 @@ module.exports = defineConfig({
       },
       '/nodeServer': {
         target: 'http://219.216.80.146:5510',
+        // target: 'http://localhost:5510',
         changeOrigin: true,
         pathRewrite: {
           '^/nodeServer': '/'
