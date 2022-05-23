@@ -5,31 +5,19 @@
         <span>Control Panel</span>
       </div>
     </template>
-    <div class="control-panel">
-      <control-panel-main></control-panel-main>
-    </div>
+    <div id="ControlPanelMain">SVG SVG SVG</div>
   </el-card>
 </template>
 
-<script>
-import { defineComponent } from "vue-demi";
+<script setup>
+import { onMounted, ref, watch, toRaw } from "vue-demi";
 
-import ControlPanelMain from './ControlPanelMain.vue';
-
-export default defineComponent({
-  name: 'ControlPanel',
-  components: {
-    ControlPanelMain,
-  },
-  setup () {
-    
-  }
-});
+onMounted(() => console.log('control panel'))
 </script>
 
 <style>
 @import url('@/assets/style/MyCard.scss');
-.control-panel {
+#ControlPanelMain {
   height: 480px;
 }
 </style>
