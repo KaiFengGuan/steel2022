@@ -37,16 +37,17 @@ export class OverView extends SuperSVGView {
       this._paintData[id] = d;
     });
     this._processExtent = detailsExtent(this._rawData);
-    console.log(this._processExtent)
+    // console.log(this._processExtent)
+    console.log(this._rawData)
 
     const xList = this._rawData.map(d => d.x ? d.x : 0);
     const yList = this._rawData.map(d => d.y ? d.y : 0);
-    const nList = this._rawData.map(d => d.good + d.bad + d.no);
+    const nList = this._rawData.map(d => d.details.production_rhythm);  // 定义产能标尺
     const xDomain = d3.extent(xList);
     const yDomain = d3.extent(yList);
     const rDomain = d3.extent(nList);
-    const xRange = [this._margin.left, this._viewWidth - this._margin.right];
-    const yRange = [this._margin.top, this._viewHeight - this._margin.bottom];
+    const xRange = [this._margin.left + 25, this._viewWidth - this._margin.right - 25];
+    const yRange = [this._margin.top + 25, this._viewHeight - this._margin.bottom - 25];
     const rRange = [0, 15];
 
     this._scaleX = d3.scaleLinear(xDomain, xRange);
@@ -83,9 +84,10 @@ export class OverView extends SuperSVGView {
       })
       .attr('custom--handle', function(id) {
         const datum = that._paintData[id];
-        const r = that._scaleR(datum.good + datum.bad + datum.no);
+        // const r = that._scaleR(datum.good + datum.bad + datum.no);
+        const r = 25;
         const instance = new ScatterPoint({width: r, height: r}, d3.select(this), id);
-        instance.joinData(datum).render();
+        instance.joinData(datum, that._scaleR).render();
         that._pointMap.set(id, instance);
       })
     
@@ -111,11 +113,11 @@ export class OverView extends SuperSVGView {
       direction: dir.up,
       displayText: false,
       chartFun: curry(paintContent, datum.details, this._processExtent),
-      box: { width: contentWidth, height: contentWidth },
+      box: { width: contentWidth * 2, height: contentWidth },
     })
 
     function paintContent(data, extent, group) {
-      const instance = new ProcessView({ width: contentWidth, height: contentWidth}, group, `${id}-content`);
+      const instance = new ProcessView({ width: contentWidth * 2, height: contentWidth}, group, `${id}-content`);
       instance.joinData(data, extent).render();
     }
   }

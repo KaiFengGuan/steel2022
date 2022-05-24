@@ -19,6 +19,7 @@ export default class TrendView extends SuperGroupView {
     this._tooltip = tooltipIns;
 
     this._xScale = undefined;
+    this._selectStatus = false;   // 是否刷选的状态
   }
 
   /**
@@ -66,16 +67,26 @@ export default class TrendView extends SuperGroupView {
   updateXSelect(disDomain) {  // 提示gantt图显示的区域
     if (!disDomain) return;
 
-    const tranY = this._viewHeight;
-    this._container.selectAll('.zoom-range')
-      .data(['left', 'right'], d => d)
-      .join(
-        enter => enter.append('path')
-          .attr('class', 'zoom-range')
-          .attr('fill', '#666')
-          .attr('d', Boundary.zoomDisArea({ width: 10, height: 10 })),
-      )
-      .attr('transform', (d, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
+    // this._container.selectAll('.zoom-range')
+    //   .data(paintData, d => d)
+    //   .join(
+    //     enter => enter.append('path')
+    //       .attr('class', 'zoom-range')
+    //       .attr('fill', '#666')
+    //       .attr('d', Boundary.zoomDisArea({ width: 10, height: 10 })),
+    //   )
+    //   .attr('transform', (d, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
+
+    // 更改样式
+    const [good, bad, no] = this.#filterXSelectData(this._rawData, disDomain);
+    const total = good + bad + no;
+    const paintData = [Math.round(bad / total * 100), Math.round((good + no) / total * 100)];
+    if (!this._selectStatus) {
+      this.#renderXSelectBar(total, paintData, disDomain);
+      this._selectStatus = true;
+    } else {
+      this.#updateXSelectBar(total, paintData, disDomain);
+    }
   }
 
   #renderStackBar(data, {
@@ -152,7 +163,7 @@ export default class TrendView extends SuperGroupView {
     store.dispatch(SET_BRUSH_DATE, newState);  // 派发修改state: 刷选的时间
   }
 
-  #brushHandle (g, selection) {
+  #brushHandle(g, selection) {
     g.selectAll(".handle--custom")
       .data([{type: "w"}, {type: "e"}])
       .join(
@@ -170,5 +181,80 @@ export default class TrendView extends SuperGroupView {
       )
       .attr("display", selection === null ? "none" : null)
       .attr("transform", selection === null ? null : (d, i) => `translate(${selection[i]},${this._margin.top})`)
+  }
+
+  #filterXSelectData(_rawData, disDomain) {
+    const [start, end] = disDomain.map(d => d.getTime());
+    const len = _rawData.endTimeOutput.length;
+    let good = 0, bad = 0, no = 0;
+    for (let i = 0; i < len; i++) {
+      const itemDate = new Date(_rawData.endTimeOutput[i]).getTime();
+      if (itemDate >= start && itemDate <= end) {
+        good += _rawData.good_flag[i];
+        bad += _rawData.bad_flag[i];
+        no += _rawData.no_flag[i];
+      }
+    }
+    return [good, bad, no];
+  }
+
+  #renderXSelectBar(total, paintData, disDomain) {
+    const width = 22;   // 小圆圈的尺寸
+    const tranY = this._viewHeight;
+
+    // 中间的棍
+    const rectHeight = width;
+    const rectWidth = this._xScale(disDomain[1]) - this._xScale(disDomain[0]);
+    const linkGroup = this._container.append('g')
+      .attr('class', 'link-group')
+      .attr('transform', `translate(${this._xScale(disDomain[0])}, ${tranY})`)
+    linkGroup.append('rect')
+      .attr('width', rectWidth)
+      .attr('height', rectHeight)
+      .attr('fill', '#ccc')
+      .attr('stroke', d3.color('#ccc').darker(0.5))
+      .attr('stroke-width', 1.5)
+    const text = linkGroup.append('text')
+      .attr('fill', 'white')
+      .text(total)
+    const { width: textW, height: textH } = text.node().getBBox();
+    text.attr('transform', `translate(${[(rectWidth - textW) / 2, (rectHeight + textH) / 2 - 2]})`);
+
+    // 两边的球
+    const rangeGroup = this._container.selectAll('.zoom-range')
+      .data(paintData)
+      .join('g')
+      .attr('class', 'zoom-range')
+      .attr('transform', (_, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
+    rangeGroup.append('circle')
+      .attr('r', width / 2)
+      .attr('fill', (_, i) => labelColor[i])
+      .attr('stroke', (_, i) => d3.color(labelColor[i]).darker(0.5))
+      .attr('stroke-width', 1.5)
+      .attr('transform', `translate(${[0, width / 2]})`)
+    rangeGroup.append('text')
+      .attr('class', 'range-text')
+      .attr('fill', 'white')
+      .text(d => d)
+      .attr('transform', `translate(${[-7, (width + 12) / 2]})`)
+  }
+
+  #updateXSelectBar(total, paintData, disDomain) {
+    const width = 22;   // 小圆圈的尺寸
+    const tranY = this._viewHeight;
+    const rectHeight = width;
+    const rectWidth = this._xScale(disDomain[1]) - this._xScale(disDomain[0]);
+
+    const linkGroup = this._container.select('.link-group');
+    linkGroup.attr('transform', `translate(${this._xScale(disDomain[0])}, ${tranY})`);
+    linkGroup.select('rect').attr('width', rectWidth);
+    const text = linkGroup.select('text')
+    text.text(total);
+    const { width: textW, height: textH } = text.node().getBBox();
+    text.attr('transform', `translate(${[(rectWidth - textW) / 2, (rectHeight + textH) / 2 - 2]})`);
+
+    const rangeGroup = this._container.selectAll('.zoom-range');
+    rangeGroup.attr('transform', (_, i) => `translate(${this._xScale(disDomain[i])}, ${tranY})`)
+    this._container.selectAll('.range-text').text((_, i) => paintData[i]);
   }
 }
