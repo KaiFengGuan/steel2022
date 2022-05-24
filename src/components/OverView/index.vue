@@ -18,14 +18,16 @@ import TooltipClass from "@/components/Tooltip/main"
 // 离线数据
 import scatter from '@/data/scatter.json';
 
-
 let scatterData = ref(0);
 onMounted(() => {
   // 模拟promise获取数据
-  // console.log('数据: ', scatterData, scatterData.value)
+  let t = [];
+  let n = scatter.length;
+  for (let i = 0; i < 10; i++) {
+    t.push(scatter[Math.floor(Math.random() * n)]);
+  }
   setTimeout(() => {
-    // scatterData.value++;
-    scatterData.value = scatter;
+    scatterData.value = t;
   }, 2000);
 })
 
@@ -52,9 +54,6 @@ watch(scatterData, () => {
 
 <style>
 @import url('@/assets/style/MyCard.scss');
-.overview {
-  height: 350px;
-}
 .overview-card {
   margin-top: 10px;
 }
