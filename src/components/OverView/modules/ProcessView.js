@@ -3,6 +3,7 @@ import {
   SuperGroupView,
   processColor,
   cloneObject,
+  SegoeUI,
 } from '@/utils';
 
 import {
@@ -26,6 +27,7 @@ export default class ProcessView extends SuperGroupView {
     this._extend = null;      // 原始数据的最大值
     this._angle = null;       // 绘制边界的数据
     this._fillData = null;    // 绘制填充的数据
+    this._targetData = null;  // 批次的指标数据
 
     this._displaySub = true;  // 是否显示子工序
     this._colors = cloneObject(processColor);
@@ -45,14 +47,43 @@ export default class ProcessView extends SuperGroupView {
     this._angle = computeAngle();
     this._fillData = computeArcFillAngle(value, extent, this._angle);
 
+    this._targetData = {
+      steelspec: 'X80M',
+      target: [
+        ['Length', 30.15, 'm'],
+        [' Width', 5.31, 'm'],
+        [' Thick', 23.1, 'mm']
+      ]
+    };
+
     return this;
   }
 
   render() {
+    // 背景框
+    // this._container.append('rect')
+    //   .attr('width', this._viewWidth)
+    //   .attr('height', this._viewHeight)
+    //   .attr('fill', 'white')
+    //   .attr('stroke', 'red')
+    
+    // 分割线
+    const splitLineX = this._viewWidth / 2 - 2;
+    this._container.append('line')
+      .attr('x1', splitLineX).attr('y1', 0)
+      .attr('x2', splitLineX).attr('y2', this._viewHeight)
+      .attr('stroke', 'grey')
+      .attr('stroke-width', 0.5)
+    
+    // 批次指标
+    const targetGroup = this._container.append('g')
+      .attr('class', 'batch-target')
+    this.#batchTarget(targetGroup);  // 指标信息
+
+    // 工序过程
     const circleGroup = this._container.append('g')
       .attr('class', 'circle-group')
-      .attr('transform', `translate(${[this._viewWidth * 0.5, this._viewHeight * 0.5]})`)
-    
+      .attr('transform', `translate(${[this._viewWidth * 0.75, this._viewHeight * 0.5]})`)
     this.#stageFill(circleGroup);    // 绘制填充
     this.#stageStroke(circleGroup);  // 绘制边框
 
@@ -115,6 +146,28 @@ export default class ProcessView extends SuperGroupView {
       )
   }
 
+  #batchTarget(group) {
+    const { steelspec, target } = this._targetData;
+    const titleSize = 20;
+    const contentSize = 14;
+    const contentSpan = 8;
+
+    group.attr('fill', 'lightslategrey').style('font-family', SegoeUI);
+
+    group.append('text')
+      .attr('transform', `translate(${[2, titleSize]})`)
+      .attr('font-size', titleSize)
+      .attr('font-weight', '600')
+      .text(steelspec);
+    
+    group.selectAll('item')
+      .data(target)
+      .join('text')
+      .attr('transform', (_, i) => `translate(0, ${titleSize + 5 + (i + 1) * (contentSize + contentSpan)})`)
+      .attr('font-size', contentSize)
+      .text(d => `${d[0]}: ${d[1]}${d[2]}`);
+  }
+
   #arcPath(r1, r2, a1, a2) {  // 参数: 半径范围, 角度范围
     return d3.arc()
       .innerRadius(r1).outerRadius(r2)
@@ -122,7 +175,7 @@ export default class ProcessView extends SuperGroupView {
   }
 
   #getArcRadius() {
-    const R = this._viewWidth / 2;
+    const R = this._viewHeight / 2;
     const innerW = 10;
     const outerW = innerW * 0.618;
     const gap = 3;

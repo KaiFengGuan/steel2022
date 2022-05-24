@@ -38,7 +38,7 @@ export class OverView extends SuperSVGView {
     });
     this._processExtent = detailsExtent(this._rawData);
     // console.log(this._processExtent)
-    // console.log(this._rawData)
+    console.log(this._rawData)
 
     const xList = this._rawData.map(d => d.x ? d.x : 0);
     const yList = this._rawData.map(d => d.y ? d.y : 0);
@@ -113,11 +113,11 @@ export class OverView extends SuperSVGView {
       direction: dir.up,
       displayText: false,
       chartFun: curry(paintContent, datum.details, this._processExtent),
-      box: { width: contentWidth, height: contentWidth },
+      box: { width: contentWidth * 2, height: contentWidth },
     })
 
     function paintContent(data, extent, group) {
-      const instance = new ProcessView({ width: contentWidth, height: contentWidth}, group, `${id}-content`);
+      const instance = new ProcessView({ width: contentWidth * 2, height: contentWidth}, group, `${id}-content`);
       instance.joinData(data, extent).render();
     }
   }
