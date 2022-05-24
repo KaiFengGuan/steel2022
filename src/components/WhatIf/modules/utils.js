@@ -226,7 +226,7 @@ async function getDispalyDiagnosisData_1(newX, data, map, boundary) {
     id: d.id,
     data: cacheDiag.get(d.id),
   })).filter(d => d.data && d.data.length !== 0)
-  console.log('in function: ', toDiag)
+  // console.log('in function: ', toDiag)
   
   // 往诊断视图发
   eventBus.emit(MOVE_GANTT, { diagData: toDiag });

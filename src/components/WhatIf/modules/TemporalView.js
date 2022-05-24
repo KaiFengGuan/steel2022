@@ -556,7 +556,7 @@ export default class TemporalView extends SuperGroupView {
         .call(tar => createElement(tar, "rect", cardAttrs))
         .each(function(d){
           let {width, height} = this.getBBox();
-          console.log(width, height)
+          // console.log(width, height)
           let label = getParentData(this, 1), //getParentData(this, 1), getParentData(this, 0)
             indexDatum = context._labelDetails[label],
             batch = d,
@@ -793,7 +793,7 @@ export default class TemporalView extends SuperGroupView {
       .append("path")
       .call(g => updateElement(g, queryAttrs))
     icon.on("click", (e, d) => {
-      console.log(d)
+      // console.log(d)
       this._labelDetails[d].pattern = "river";
       this.reRender();
     })

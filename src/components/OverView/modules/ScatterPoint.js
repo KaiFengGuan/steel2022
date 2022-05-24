@@ -23,7 +23,6 @@ export default class ScatterPoint extends SuperGroupView {
   joinData(value, rScale) {
     this._rawData = value;
     this._rScale = rScale;
-    console.log(this._rawData);
 
     return this;
   }
