@@ -172,6 +172,7 @@ export default class TemporalView extends SuperGroupView {
     this.reRender();
 
     this._container.selectAll(".iconDetails").raise();
+    this.updateIcon();
   }
 
   #initSetting(){
@@ -797,5 +798,11 @@ export default class TemporalView extends SuperGroupView {
       this._labelDetails[d].pattern = "river";
       this.reRender();
     })
+  }
+  
+  updateIcon(){
+    d3.selectAll(".iconDetails")
+      .transition().duration(500).ease(d3.easeLinear)
+      .attr("transform",  translate(this._cardWidth - 20, 0))
   }
 }
